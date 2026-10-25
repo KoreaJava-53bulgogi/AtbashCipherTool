@@ -80,5 +80,8 @@
   "UPDATE_LATER": "稍后",
   "UPDATE_SKIP": "跳过此版本",
   "UPDATE_LATEST_MESSAGE": "您正在使用最新版本 ({0})。",
-  "UPDATE_CHECK_FAILED": "无法获取更新信息。请检查网络连接。"
+  "UPDATE_CHECK_FAILED": "无法获取更新信息。请检查网络连接。",
+  "LOAD_CLIPBOARD_OCR_MENU": "从剪贴板图片读取文字",
+  "CLIPBOARD_NO_IMAGE_MESSAGE": "剪贴板中没有图片。\n请截图 (Win+Shift+S) 或复制图片后重试。",
+  "DROP_ENCRYPT_CONFIRM": "要使用 AES 加密 {0} 个文件吗?"
 }

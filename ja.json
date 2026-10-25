@@ -80,5 +80,8 @@
   "UPDATE_LATER": "後で",
   "UPDATE_SKIP": "このバージョンをスキップ",
   "UPDATE_LATEST_MESSAGE": "最新バージョン ({0}) を使用しています。",
-  "UPDATE_CHECK_FAILED": "アップデート情報を取得できませんでした。インターネット接続を確認してください。"
+  "UPDATE_CHECK_FAILED": "アップデート情報を取得できませんでした。インターネット接続を確認してください。",
+  "LOAD_CLIPBOARD_OCR_MENU": "クリップボードの画像からテキストを読み取る",
+  "CLIPBOARD_NO_IMAGE_MESSAGE": "クリップボードに画像がありません。\n画面をキャプチャ (Win+Shift+S) するか画像をコピーしてから、もう一度お試しください。",
+  "DROP_ENCRYPT_CONFIRM": "{0} 個のファイルを AES で暗号化しますか?"
 }

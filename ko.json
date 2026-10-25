@@ -117,5 +117,8 @@
   "UPDATE_LATER": "나중에",
   "UPDATE_SKIP": "이 버전 건너뛰기",
   "UPDATE_LATEST_MESSAGE": "최신 버전({0})을 사용하고 있습니다.",
-  "UPDATE_CHECK_FAILED": "업데이트 정보를 가져오지 못했습니다. 인터넷 연결을 확인해주세요."
+  "UPDATE_CHECK_FAILED": "업데이트 정보를 가져오지 못했습니다. 인터넷 연결을 확인해주세요.",
+  "LOAD_CLIPBOARD_OCR_MENU": "클립보드 이미지에서 텍스트 읽기",
+  "CLIPBOARD_NO_IMAGE_MESSAGE": "클립보드에 이미지가 없습니다.\n화면을 캡처(Win+Shift+S)하거나 이미지를 복사한 뒤 다시 시도하세요.",
+  "DROP_ENCRYPT_CONFIRM": "파일 {0}개를 AES로 암호화할까요?"
 }

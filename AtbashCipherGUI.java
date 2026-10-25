@@ -190,6 +190,7 @@ public class AtbashCipherGUI extends JFrame {
     private JMenuItem saveAsImageMenuItem;
     private JMenuItem loadMenuItem;
     private JMenuItem loadFromImageMenuItem;
+    private JMenuItem loadFromClipboardImageMenuItem;
     private JMenuItem loadFromSearchMenuItem;
     private JMenuItem loadFromImageSearchMenuItem;
     private JMenuItem encryptFileMenuItem;
@@ -562,6 +563,10 @@ public class AtbashCipherGUI extends JFrame {
         loadMenuItem = new JMenuItem();
         loadMenuItem.setIcon(loadIcon);
         loadFromImageMenuItem = new JMenuItem();
+        loadFromClipboardImageMenuItem = new JMenuItem();
+        loadFromClipboardImageMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(
+                java.awt.event.KeyEvent.VK_V,
+                java.awt.event.InputEvent.CTRL_DOWN_MASK | java.awt.event.InputEvent.SHIFT_DOWN_MASK));
         loadFromSearchMenuItem = new JMenuItem();
         loadFromImageSearchMenuItem = new JMenuItem();
         encryptFileMenuItem = new JMenuItem();
@@ -573,6 +578,7 @@ public class AtbashCipherGUI extends JFrame {
         livePreviewMenuItem = new JCheckBoxMenuItem();
         fileMenu.add(loadMenuItem);
         fileMenu.add(loadFromImageMenuItem);
+        fileMenu.add(loadFromClipboardImageMenuItem);
         fileMenu.add(loadFromSearchMenuItem);
         fileMenu.add(loadFromImageSearchMenuItem);
         fileMenu.add(encryptFileMenuItem);
@@ -798,6 +804,7 @@ public class AtbashCipherGUI extends JFrame {
         saveAsImageMenuItem.setText(languageManager.get("SAVE_IMAGE_MENU"));
         loadMenuItem.setText(languageManager.get("LOAD_MENU"));
         loadFromImageMenuItem.setText(languageManager.get("LOAD_OCR_MENU"));
+        loadFromClipboardImageMenuItem.setText(languageManager.get("LOAD_CLIPBOARD_OCR_MENU"));
         loadFromSearchMenuItem.setText(languageManager.get("LOAD_SEARCH_MENU"));
         loadFromImageSearchMenuItem.setText(languageManager.get("LOAD_IMAGE_SEARCH_MENU"));
         encryptFileMenuItem.setText(languageManager.get("ENCRYPT_FILE_MENU"));
@@ -1083,44 +1090,8 @@ public class AtbashCipherGUI extends JFrame {
         inputTextArea.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8)); // Inner padding
         inputTextArea.setOpaque(false); // Crucial for rounded corners to show through
  
-        // 드래그 앤 드롭 기능 추가
-        TransferHandler originalHandler = inputTextArea.getTransferHandler();
-        inputTextArea.setTransferHandler(new TransferHandler() {
-            @Override
-            public boolean canImport(TransferSupport support) {
-                if (support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-                    return true;
-                }
-                return originalHandler != null && originalHandler.canImport(support);
-            }
-
-            @Override
-            public boolean importData(TransferSupport support) {
-                if (support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-                    try {
-                        List<File> files = (List<File>) support.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
-                        if (files.isEmpty()) return false;
-                        
-                        File file = files.get(0);
-                        String name = file.getName().toLowerCase();
-                        
-                        if (name.endsWith(".png") || name.endsWith(".jpg") || name.endsWith(".jpeg") || name.endsWith(".bmp")) {
-                            // 이미지 파일일 경우 기존 OCR 로직 실행 (추후 리팩토링 가능)
-                            loadTextFromImageFile(file);
-                            return true;
-                        } else {
-                            String content = Files.readString(file.toPath(), StandardCharsets.UTF_8);
-                            inputTextArea.setText(content);
-                            return true;
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        return false;
-                    }
-                }
-                return originalHandler != null && originalHandler.importData(support);
-            }
-        });
+        // 드래그 앤 드롭 + 클립보드 이미지 붙여넣기(Ctrl+V → OCR)
+        inputTextArea.setTransferHandler(createDropHandler(inputTextArea.getTransferHandler()));
 
         // Output Text Area
         outputTextArea = new JTextArea();
@@ -1130,7 +1101,9 @@ public class AtbashCipherGUI extends JFrame {
         outputTextArea.setEditable(false);
         outputTextArea.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8)); // Inner padding
         outputTextArea.setOpaque(false); // Crucial for rounded corners to show through
- 
+        // 결과창에 떨어뜨린 파일도 같은 방식으로 처리 (복사 등 기본 동작은 유지)
+        outputTextArea.setTransferHandler(createDropHandler(outputTextArea.getTransferHandler()));
+
         // Buttons
         transformButton = new RoundedButton("", 10);
         clearButton = new RoundedButton("", 10);
@@ -1282,6 +1255,9 @@ public class AtbashCipherGUI extends JFrame {
         gbc.insets = new Insets(0, 0, 0, 0);
         mainPanel.add(bottomPanel, gbc);
  
+        // 창의 빈 곳(버튼 주변 등)에 떨어뜨린 파일도 처리
+        mainPanel.setTransferHandler(createDropHandler(null));
+
         // 메인 패널만 프레임에 추가
         add(mainPanel);
     }
@@ -1449,6 +1425,7 @@ public class AtbashCipherGUI extends JFrame {
                 loadTextFromImageFile(fileChooser.getSelectedFile());
             }
         });
+        loadFromClipboardImageMenuItem.addActionListener(e -> loadTextFromClipboardImage());
         encryptFileMenuItem.addActionListener(e -> handleFileEncryption());
         decryptFileMenuItem.addActionListener(e -> handleFileDecryption());
 
@@ -1727,10 +1704,203 @@ public class AtbashCipherGUI extends JFrame {
         return new String[]{id.trim(), secret.trim()};
     }
 
+    // ---------------------------------------------------------------------
+    // 드래그 앤 드롭 / 클립보드 이미지
+    // ---------------------------------------------------------------------
+
+    private static final java.util.Set<String> IMAGE_EXTENSIONS =
+            java.util.Set.of("png", "jpg", "jpeg", "bmp", "gif");
+
+    /**
+     * 파일 드롭과 이미지 붙여넣기를 처리하는 TransferHandler 를 만듭니다.
+     * 글자 붙여넣기 / 복사처럼 그 밖의 동작은 원래 핸들러(original)에 맡깁니다.
+     */
+    private TransferHandler createDropHandler(TransferHandler original) {
+        return new TransferHandler() {
+            @Override
+            public boolean canImport(TransferSupport support) {
+                if (support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) return true;
+                if (isImageOnly(support)) return true;
+                return original != null && original.canImport(support);
+            }
+
+            @Override
+            @SuppressWarnings("unchecked")
+            public boolean importData(TransferSupport support) {
+                try {
+                    if (support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+                        List<File> files = (List<File>) support.getTransferable()
+                                .getTransferData(DataFlavor.javaFileListFlavor);
+                        handleDroppedFiles(files);
+                        return true;
+                    }
+                    if (isImageOnly(support)) {
+                        Image img = (Image) support.getTransferable().getTransferData(DataFlavor.imageFlavor);
+                        loadTextFromImage(toBufferedImage(img));
+                        return true;
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return false;
+                }
+                return original != null && original.importData(support);
+            }
+
+            // 글자가 함께 들어있으면(웹페이지 복사 등) 글자 붙여넣기를 우선함
+            private boolean isImageOnly(TransferSupport support) {
+                return support.isDataFlavorSupported(DataFlavor.imageFlavor)
+                        && !support.isDataFlavorSupported(DataFlavor.stringFlavor);
+            }
+
+            // 원래 핸들러의 복사/잘라내기 기능 유지
+            @Override
+            public int getSourceActions(JComponent c) {
+                return original != null ? original.getSourceActions(c) : NONE;
+            }
+
+            @Override
+            public void exportToClipboard(JComponent comp, Clipboard clip, int action) {
+                if (original != null) original.exportToClipboard(comp, clip, action);
+            }
+        };
+    }
+
+    /**
+     * 끌어다 놓은 파일을 종류에 따라 처리합니다.
+     *  - 이미지 1개 → 글자 인식(OCR)
+     *  - .enc 파일 → 복호화
+     *  - 텍스트 파일 1개 → 입력창에 불러오기
+     *  - 그 밖의 파일 → AES로 암호화할지 물어봄
+     */
+    private void handleDroppedFiles(List<File> files) {
+        List<File> regular = new ArrayList<>();
+        for (File f : files) {
+            if (f.isFile()) regular.add(f);
+        }
+        if (regular.isEmpty()) return;
+
+        if (regular.size() == 1 && IMAGE_EXTENSIONS.contains(extensionOf(regular.get(0)))) {
+            loadTextFromImageFile(regular.get(0));
+            return;
+        }
+
+        boolean allEncrypted = regular.stream().allMatch(f -> "enc".equals(extensionOf(f)));
+        if (allEncrypted) {
+            decryptFiles(regular.toArray(new File[0]));
+            return;
+        }
+
+        if (regular.size() == 1 && isTextFile(regular.get(0))) {
+            try {
+                inputTextArea.setText(Files.readString(regular.get(0).toPath(), StandardCharsets.UTF_8));
+                outputTextArea.setText("");
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(this, languageManager.get("LOAD_ERROR_MESSAGE") + ex.getMessage(),
+                        languageManager.get("LOAD_ERROR_TITLE"), JOptionPane.ERROR_MESSAGE);
+            }
+            return;
+        }
+
+        int answer = JOptionPane.showConfirmDialog(this,
+                languageManager.get("DROP_ENCRYPT_CONFIRM").replace("{0}", String.valueOf(regular.size())),
+                languageManager.get("ENCRYPT_FILE_DIALOG_TITLE"), JOptionPane.YES_NO_OPTION);
+        if (answer == JOptionPane.YES_OPTION) {
+            encryptFiles(regular.toArray(new File[0]));
+        }
+    }
+
+    private static String extensionOf(File f) {
+        String name = f.getName();
+        int dot = name.lastIndexOf('.');
+        return dot < 0 ? "" : name.substring(dot + 1).toLowerCase();
+    }
+
+    /** 앞부분에 0 바이트가 없고, 5MB 이하이며, UTF-8로 읽히면 텍스트 파일로 봄 */
+    private static boolean isTextFile(File f) {
+        if (f.length() > 5L * 1024 * 1024) return false;
+        try (InputStream in = new FileInputStream(f)) {
+            byte[] head = in.readNBytes(8192);
+            for (byte b : head) {
+                if (b == 0) return false;
+            }
+            StandardCharsets.UTF_8.newDecoder()
+                    .onMalformedInput(java.nio.charset.CodingErrorAction.REPORT)
+                    .decode(java.nio.ByteBuffer.wrap(head, 0, trimIncompleteUtf8(head)));
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+    /** 8KB 경계에서 잘린 한글(멀티바이트 문자)을 오류로 보지 않도록 끝을 정리 */
+    private static int trimIncompleteUtf8(byte[] b) {
+        int end = b.length;
+        int i = end - 1;
+        int back = 0;
+        while (i >= 0 && back < 3 && (b[i] & 0xC0) == 0x80) { i--; back++; }
+        if (i >= 0 && (b[i] & 0x80) != 0) {
+            int need = (b[i] & 0xE0) == 0xC0 ? 1 : (b[i] & 0xF0) == 0xE0 ? 2 : (b[i] & 0xF8) == 0xF0 ? 3 : 0;
+            if (back < need) return i;
+        }
+        return end;
+    }
+
+    /** 클립보드에 있는 이미지(캡처 등)에서 글자를 읽습니다. */
+    private void loadTextFromClipboardImage() {
+        try {
+            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            if (clipboard.isDataFlavorAvailable(DataFlavor.imageFlavor)) {
+                Image img = (Image) clipboard.getData(DataFlavor.imageFlavor);
+                loadTextFromImage(toBufferedImage(img));
+                return;
+            }
+            if (clipboard.isDataFlavorAvailable(DataFlavor.javaFileListFlavor)) {
+                @SuppressWarnings("unchecked")
+                List<File> files = (List<File>) clipboard.getData(DataFlavor.javaFileListFlavor);
+                if (files.size() == 1 && IMAGE_EXTENSIONS.contains(extensionOf(files.get(0)))) {
+                    loadTextFromImageFile(files.get(0));
+                    return;
+                }
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        JOptionPane.showMessageDialog(this, languageManager.get("CLIPBOARD_NO_IMAGE_MESSAGE"),
+                languageManager.get("OCR_ERROR_TITLE"), JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private static BufferedImage toBufferedImage(Image img) {
+        if (img instanceof BufferedImage) return (BufferedImage) img;
+        ImageIcon icon = new ImageIcon(img); // 이미지가 다 로드될 때까지 기다림
+        BufferedImage copy = new BufferedImage(icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = copy.createGraphics();
+        g.setColor(Color.WHITE);
+        g.fillRect(0, 0, copy.getWidth(), copy.getHeight());
+        g.drawImage(icon.getImage(), 0, 0, null);
+        g.dispose();
+        return copy;
+    }
+
     /**
      * 이미지 파일로부터 텍스트를 인식하여 입력창에 설정합니다. (OCR)
      */
     private void loadTextFromImageFile(File imageFile) {
+        BufferedImage image;
+        try {
+            image = ImageIO.read(imageFile);
+            if (image == null) throw new IOException("Cannot read image.");
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this, languageManager.get("OCR_ERROR_MESSAGE") + "\n" + ex.getMessage(),
+                    languageManager.get("OCR_ERROR_TITLE"), JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        loadTextFromImage(image);
+    }
+
+    /**
+     * 이미지에서 텍스트를 인식하여 입력창에 설정합니다. (OCR)
+     */
+    private void loadTextFromImage(BufferedImage image) {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         new SwingWorker<String, Void>() {
             @Override
@@ -1743,9 +1913,6 @@ public class AtbashCipherGUI extends JFrame {
                 if (!new File(tessDataFolder, "kor.traineddata").exists() || !new File(tessDataFolder, "eng.traineddata").exists()) {
                     throw new FileNotFoundException("Tesseract data files missing.");
                 }
-
-                BufferedImage image = ImageIO.read(imageFile);
-                if (image == null) throw new IOException("Cannot read image.");
 
                 BufferedImage grayImage = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
                 Graphics2D g2d = grayImage.createGraphics();
@@ -1789,9 +1956,15 @@ public class AtbashCipherGUI extends JFrame {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle(languageManager.get("ENCRYPT_FILE_DIALOG_TITLE"));
         fileChooser.setMultiSelectionEnabled(true);
-        
+
         if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            final File[] inputFiles = fileChooser.getSelectedFiles();
+            encryptFiles(fileChooser.getSelectedFiles());
+        }
+    }
+
+    /** 파일들을 비밀번호 하나로 AES 암호화합니다. (각 파일 옆에 .enc 파일 생성) */
+    private void encryptFiles(final File[] inputFiles) {
+        {
             String password = promptForPassword(languageManager.get("ENCRYPT_PASSWORD_PROMPT"));
             if (password == null) return; // User cancelled
 
@@ -1847,36 +2020,49 @@ public class AtbashCipherGUI extends JFrame {
         fileChooser.setFileFilter(new FileNameExtensionFilter("Encrypted Files (*.enc)", "enc"));
 
         if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            File inputFile = fileChooser.getSelectedFile();
+            decryptFiles(new File[]{fileChooser.getSelectedFile()});
+        }
+    }
+
+    /** .enc 파일들을 비밀번호 하나로 복호화합니다. (.enc 를 뗀 이름으로 저장) */
+    private void decryptFiles(File[] inputFiles) {
+        {
             String password = promptForPassword(languageManager.get("DECRYPT_PASSWORD_PROMPT"));
             if (password == null) return; // User cancelled
 
-            // Suggest output file name by removing .enc extension if present
-            String outputFileName = inputFile.getName();
-            if (outputFileName.toLowerCase().endsWith(".enc")) {
-                outputFileName = outputFileName.substring(0, outputFileName.length() - 4);
-            } else {
-                outputFileName += ".dec"; // Add .dec if no .enc extension
-            }
-            File outputFile = new File(inputFile.getParent(), outputFileName);
-
-            // Check if output file already exists
-            if (outputFile.exists()) {
-                int confirm = JOptionPane.showConfirmDialog(this,
-                        languageManager.get("OVERWRITE_FILE_CONFIRM_MESSAGE").replace("{0}", outputFile.getName()),
-                        languageManager.get("OVERWRITE_FILE_CONFIRM_TITLE"),
-                        JOptionPane.YES_NO_OPTION,
-                        JOptionPane.WARNING_MESSAGE);
-                if (confirm != JOptionPane.YES_OPTION) {
-                    return; // User chose not to overwrite
+            List<File[]> jobs = new ArrayList<>(); // {input, output}
+            for (File inputFile : inputFiles) {
+                // Suggest output file name by removing .enc extension if present
+                String outputFileName = inputFile.getName();
+                if (outputFileName.toLowerCase().endsWith(".enc")) {
+                    outputFileName = outputFileName.substring(0, outputFileName.length() - 4);
+                } else {
+                    outputFileName += ".dec"; // Add .dec if no .enc extension
                 }
+                File outputFile = new File(inputFile.getParent(), outputFileName);
+
+                // Check if output file already exists
+                if (outputFile.exists()) {
+                    int confirm = JOptionPane.showConfirmDialog(this,
+                            languageManager.get("OVERWRITE_FILE_CONFIRM_MESSAGE").replace("{0}", outputFile.getName()),
+                            languageManager.get("OVERWRITE_FILE_CONFIRM_TITLE"),
+                            JOptionPane.YES_NO_OPTION,
+                            JOptionPane.WARNING_MESSAGE);
+                    if (confirm != JOptionPane.YES_OPTION) {
+                        continue; // Skip this file
+                    }
+                }
+                jobs.add(new File[]{inputFile, outputFile});
             }
-            
+            if (jobs.isEmpty()) return;
+
             setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             new SwingWorker<Void, Void>() {
                 @Override
                 protected Void doInBackground() throws Exception {
-                    AESFileCipher.decryptFile(inputFile, outputFile, password);
+                    for (File[] job : jobs) {
+                        AESFileCipher.decryptFile(job[0], job[1], password);
+                    }
                     return null;
                 }
 
@@ -1885,8 +2071,10 @@ public class AtbashCipherGUI extends JFrame {
                     setCursor(Cursor.getDefaultCursor());
                     try {
                         get(); // Check for exceptions
+                        StringBuilder outputs = new StringBuilder();
+                        for (File[] job : jobs) outputs.append("\n").append(job[1].getAbsolutePath());
                         JOptionPane.showMessageDialog(AtbashCipherGUI.this,
-                                languageManager.get("DECRYPT_SUCCESS_MESSAGE") + outputFile.getAbsolutePath(),
+                                languageManager.get("DECRYPT_SUCCESS_MESSAGE") + outputs,
                                 languageManager.get("DECRYPT_SUCCESS_TITLE"),
                                 JOptionPane.INFORMATION_MESSAGE);
                     } catch (Exception ex) {
