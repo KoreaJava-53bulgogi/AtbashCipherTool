@@ -109,5 +109,17 @@
   "HISTORY_CLOSE": "閉じる",
   "SAVE_QR_MENU": "QR コードとして保存...",
   "QR_SAVE_BUTTON": "PNG で保存",
-  "QR_TOO_LONG_MESSAGE": "結果が長すぎて 1 つの QR コードに収まりません。\n(英字で約 2,300 文字、日本語で約 700 文字まで)"
+  "QR_TOO_LONG_MESSAGE": "結果が長すぎて 1 つの QR コードに収まりません。\n(英字で約 2,300 文字、日本語で約 700 文字まで)",
+  "UPDATE_INSTALL_NOW": "今すぐ更新",
+  "UPDATE_DOWNLOADING": "新しいバージョン {0} をダウンロード中...",
+  "UPDATE_CANCEL": "キャンセル",
+  "UPDATE_READY_MESSAGE": "新しいバージョン {0} をインストールする準備ができました。\n[OK] を押すとアプリが閉じてインストールが始まります。\n(管理者権限の確認画面が表示されたら [はい] を押してください。インストール後にアプリが再起動します。)",
+  "UPDATE_DOWNLOAD_FAILED": "新しいバージョンをダウンロードできませんでした。インターネット接続を確認してください。",
+  "UPDATE_VERIFY_FAILED": "ダウンロードしたファイルの検査に失敗したため、インストールしませんでした。",
+  "UPDATE_LAUNCH_FAILED": "インストーラーを起動できませんでした。",
+  "UPDATE_OPEN_PAGE_INSTEAD": "ダウンロードページを開いて手動で入手しますか?",
+  "BUTTON_OK": "OK",
+  "BUTTON_CANCEL": "キャンセル",
+  "BUTTON_YES": "はい",
+  "BUTTON_NO": "いいえ"
 }

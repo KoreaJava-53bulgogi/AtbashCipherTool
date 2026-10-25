@@ -6,7 +6,7 @@
 
     <groupId>com.june</groupId>
     <artifactId>atbash-cipher-tool</artifactId>
-    <version>8.0.0</version>
+    <version>8.1.0</version>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>

@@ -146,5 +146,17 @@
   "HISTORY_CLOSE": "닫기",
   "SAVE_QR_MENU": "QR 코드로 저장...",
   "QR_SAVE_BUTTON": "PNG로 저장",
-  "QR_TOO_LONG_MESSAGE": "결과가 너무 길어서 QR 코드 하나에 담을 수 없습니다.\n(한글 약 700자, 영문 약 2,300자까지 가능)"
+  "QR_TOO_LONG_MESSAGE": "결과가 너무 길어서 QR 코드 하나에 담을 수 없습니다.\n(한글 약 700자, 영문 약 2,300자까지 가능)",
+  "UPDATE_INSTALL_NOW": "지금 업데이트",
+  "UPDATE_DOWNLOADING": "새 버전 {0}을(를) 내려받는 중...",
+  "UPDATE_CANCEL": "취소",
+  "UPDATE_READY_MESSAGE": "새 버전 {0}을(를) 설치할 준비가 됐습니다.\n[확인]을 누르면 앱이 닫히고 설치가 시작됩니다.\n(관리자 권한 확인 창이 뜨면 [예]를 눌러주세요. 설치가 끝나면 앱이 다시 켜집니다.)",
+  "UPDATE_DOWNLOAD_FAILED": "새 버전을 내려받지 못했습니다. 인터넷 연결을 확인해주세요.",
+  "UPDATE_VERIFY_FAILED": "내려받은 파일이 올바르지 않아 설치하지 않았습니다. (파일 검사 실패)",
+  "UPDATE_LAUNCH_FAILED": "설치 프로그램을 실행하지 못했습니다.",
+  "UPDATE_OPEN_PAGE_INSTEAD": "다운로드 페이지를 열어 직접 받으시겠습니까?",
+  "BUTTON_OK": "확인",
+  "BUTTON_CANCEL": "취소",
+  "BUTTON_YES": "예",
+  "BUTTON_NO": "아니요"
 }

@@ -109,5 +109,17 @@
   "HISTORY_CLOSE": "关闭",
   "SAVE_QR_MENU": "保存为二维码...",
   "QR_SAVE_BUTTON": "保存为 PNG",
-  "QR_TOO_LONG_MESSAGE": "结果太长,无法放入一个二维码。\n(英文约 2,300 个字符,中文约 700 个字符)"
+  "QR_TOO_LONG_MESSAGE": "结果太长,无法放入一个二维码。\n(英文约 2,300 个字符,中文约 700 个字符)",
+  "UPDATE_INSTALL_NOW": "立即更新",
+  "UPDATE_DOWNLOADING": "正在下载新版本 {0}...",
+  "UPDATE_CANCEL": "取消",
+  "UPDATE_READY_MESSAGE": "新版本 {0} 已准备好安装。\n按 [确定] 后应用将关闭并开始安装。\n(如果出现管理员权限确认窗口,请选择 [是]。安装完成后应用会重新启动。)",
+  "UPDATE_DOWNLOAD_FAILED": "无法下载新版本。请检查网络连接。",
+  "UPDATE_VERIFY_FAILED": "下载的文件未通过校验,因此没有安装。",
+  "UPDATE_LAUNCH_FAILED": "无法启动安装程序。",
+  "UPDATE_OPEN_PAGE_INSTEAD": "要打开下载页面手动下载吗?",
+  "BUTTON_OK": "确定",
+  "BUTTON_CANCEL": "取消",
+  "BUTTON_YES": "是",
+  "BUTTON_NO": "否"
 }

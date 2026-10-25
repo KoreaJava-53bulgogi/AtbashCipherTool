@@ -1,5 +1,7 @@
 {
-  "version": "8.0.0",
+  "version": "8.1.0",
   "url": "https://github.com/KoreaJava-53bulgogi/AtbashCipherTool/releases/latest",
-  "notes": "업데이트 알림, 클립보드 이미지 OCR, 드래그 앤 드롭, AES 텍스트 암호화, Base64/Hex/URL/ROT13, 한글 자모 암호, 변환 기록, QR 코드 저장"
+  "installer": "https://github.com/KoreaJava-53bulgogi/AtbashCipherTool/releases/download/v8.1.0/Setup_8.1.0.exe",
+  "sha256": "2f33f49bf462dbdfee6a82b0f8e12106ebd6f898790d017dc116215111f8d2ff",
+  "notes": "자동 업데이트: 알림 창에서 [지금 업데이트]를 누르면 새 버전을 내려받아 설치하고 다시 실행합니다."
 }

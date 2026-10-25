@@ -1,10 +1,13 @@
 ﻿[Setup]
+; 업데이트할 때 "같은 앱"으로 알아보는 고유 이름. 절대 바꾸지 말 것.
+; (7.1.0~8.0.0 은 AppId 를 따로 쓰지 않아 AppName 이 대신 쓰였으므로 같은 값으로 고정)
+AppId=Atbash Cipher Tool
 AppName=Atbash Cipher Tool
-AppVersion=8.0.0
+AppVersion=8.1.0
 DefaultDirName={autopf}\Atbash Cipher Tool
 DefaultGroupName=Atbash Cipher Tool
 OutputDir=Output
-OutputBaseFilename=Setup_8.0.0
+OutputBaseFilename=Setup_8.1.0
 Compression=lzma
 SolidCompression=yes
 WizardImageFile=installer.bmp
@@ -73,6 +76,9 @@ Name: "{autodesktop}\Atbash Cipher Tool"; Filename: "{app}\AtbashCipherTool.exe"
 
 [Run]
 Filename: "{app}\AtbashCipherTool.exe"; Description: "{cm:LaunchProgram,Atbash Cipher Tool}"; Flags: nowait postinstall skipifsilent
+; 앱의 자동 업데이트(/SILENT 설치)가 끝나면 새 버전을 다시 실행.
+; runasoriginaluser: 관리자 권한이 아닌 원래 사용자 권한으로 실행 (드래그 앤 드롭 등이 정상 동작)
+Filename: "{app}\AtbashCipherTool.exe"; Flags: nowait runasoriginaluser; Check: WizardSilent
 
 [Code]
 const
@@ -172,8 +178,22 @@ begin
     CustomMessage('OptionTitle'), CustomMessage('OptionDesc'), '', False, False);
   OptionPage.Add(CustomMessage('OptionDesktop'));
   OptionPage.Add(CustomMessage('OptionStartMenu'));
-  OptionPage.Values[0] := True;   { 기본으로 체크 }
-  OptionPage.Values[1] := True;
+  { 처음 설치는 둘 다 체크. 업데이트 때는 지난번에 고른 값을 그대로 씀
+    (자동 업데이트는 이 페이지를 보여주지 않으므로, 지운 바로가기가 다시 생기지 않게) }
+  OptionPage.Values[0] := GetPreviousData('DesktopIcon', '1') = '1';
+  OptionPage.Values[1] := GetPreviousData('StartMenuIcon', '1') = '1';
+end;
+
+function BoolTo01(B: Boolean): String;
+begin
+  if B then Result := '1' else Result := '0';
+end;
+
+{ 설치할 때 고른 옵션을 저장해 두었다가 다음 설치(업데이트) 때 GetPreviousData 로 읽음 }
+procedure RegisterPreviousData(PreviousDataKey: Integer);
+begin
+  SetPreviousData(PreviousDataKey, 'DesktopIcon', BoolTo01(OptionPage.Values[0]));
+  SetPreviousData(PreviousDataKey, 'StartMenuIcon', BoolTo01(OptionPage.Values[1]));
 end;
 
 function WantDesktopIcon: Boolean;

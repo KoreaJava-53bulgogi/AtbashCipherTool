@@ -8,7 +8,7 @@ rem  1) Maven      : target\AtbashCipherTool.jar
 rem  2) jlink      : target\runtime  (slim Java runtime, ~48MB)
 rem  3) Launch4j   : target\Release\AtbashCipherTool.exe
 rem  4) Inno Setup : target\Output\Setup_<version>.exe
-rem  5) zip        : target\Output\Setup_<version>.zip
+rem  5) zip        : target\Output\Setup_<version>.zip  (+ version.json for updates)
 rem
 rem  Note: "mvn clean" is NOT used, because it would delete the
 rem  installer files in target (Atbash.iss, icons...).
@@ -51,6 +51,10 @@ rem Read the installer file name (e.g. Setup_7.1.0) from Atbash.iss
 set "SETUPNAME="
 for /f "tokens=2 delims==" %%a in ('findstr /b /c:"OutputBaseFilename=" "target\Atbash.iss"') do set "SETUPNAME=%%a"
 if not defined SETUPNAME ( echo [ERROR] OutputBaseFilename not found in Atbash.iss. & goto :error )
+rem Read the version (e.g. 8.1.0) from Atbash.iss for version.json
+set "APPVERSION="
+for /f "tokens=2 delims==" %%a in ('findstr /b /c:"AppVersion=" "target\Atbash.iss"') do set "APPVERSION=%%a"
+if not defined APPVERSION ( echo [ERROR] AppVersion not found in Atbash.iss. & goto :error )
 echo OK.
 echo.
 
@@ -89,16 +93,21 @@ if errorlevel 1 ( echo [ERROR] Signing the installer failed. & goto :error )
 :nosign_setup
 echo.
 
-echo [5/5] Creating zip...
+echo [5/5] Creating zip and version.json...
 if exist "target\Output\%SETUPNAME%.zip" del /q "target\Output\%SETUPNAME%.zip"
 "%TAR%" -a -c -f "target\Output\%SETUPNAME%.zip" -C "target\Output" "%SETUPNAME%.exe"
 if errorlevel 1 ( echo [ERROR] zip failed. & goto :error )
+rem version.json: version, download link and SHA-256 of the (signed) installer.
+rem Push it to GitHub only AFTER the installer is uploaded to the v%APPVERSION% release.
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0tools\make-version-json.ps1" -Version "%APPVERSION%" -Installer "%~dp0target\Output\%SETUPNAME%.exe" -Out "%~dp0version.json"
+if errorlevel 1 ( echo [ERROR] version.json update failed. & goto :error )
 echo.
 
 echo ==================================================
 echo  DONE!
 echo  target\Output\%SETUPNAME%.exe
 echo  target\Output\%SETUPNAME%.zip
+echo  version.json (updated - push it after uploading the installer)
 if not defined SIGN_PFX echo  (not code-signed: SIGN_PFX is not set)
 echo ==================================================
 goto :end

@@ -146,5 +146,17 @@
   "HISTORY_CLOSE": "Close",
   "SAVE_QR_MENU": "Save as QR Code...",
   "QR_SAVE_BUTTON": "Save as PNG",
-  "QR_TOO_LONG_MESSAGE": "The result is too long to fit in one QR code.\n(Up to about 2,300 English letters or 700 Korean characters)"
+  "QR_TOO_LONG_MESSAGE": "The result is too long to fit in one QR code.\n(Up to about 2,300 English letters or 700 Korean characters)",
+  "UPDATE_INSTALL_NOW": "Update Now",
+  "UPDATE_DOWNLOADING": "Downloading version {0}...",
+  "UPDATE_CANCEL": "Cancel",
+  "UPDATE_READY_MESSAGE": "Version {0} is ready to install.\nPress OK to close the app and start the installation.\n(If Windows asks for permission, choose Yes. The app restarts when the installation is done.)",
+  "UPDATE_DOWNLOAD_FAILED": "Could not download the new version. Please check your internet connection.",
+  "UPDATE_VERIFY_FAILED": "The downloaded file did not pass the integrity check, so it was not installed.",
+  "UPDATE_LAUNCH_FAILED": "Could not start the installer.",
+  "UPDATE_OPEN_PAGE_INSTEAD": "Open the download page to get it manually?",
+  "BUTTON_OK": "OK",
+  "BUTTON_CANCEL": "Cancel",
+  "BUTTON_YES": "Yes",
+  "BUTTON_NO": "No"
 }

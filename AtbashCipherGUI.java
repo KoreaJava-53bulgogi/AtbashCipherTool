@@ -156,7 +156,7 @@ public class AtbashCipherGUI extends JFrame {
         KOREAN, ENGLISH, CHINESE, JAPANESE
     }
 
-    private static final String APP_VERSION = "8.0.0";
+    private static final String APP_VERSION = "8.1.0";
 
     private JTextArea inputTextArea;
     private JTextArea outputTextArea;
@@ -857,6 +857,11 @@ public class AtbashCipherGUI extends JFrame {
 
     private void applyLanguage() {
         setTitle(languageManager.get("WINDOW_TITLE") + " v" + APP_VERSION);
+        // 확인/취소/예/아니요 버튼도 선택한 언어로 (Java 기본값은 영어만 들어 있음)
+        UIManager.put("OptionPane.okButtonText", languageManager.get("BUTTON_OK"));
+        UIManager.put("OptionPane.cancelButtonText", languageManager.get("BUTTON_CANCEL"));
+        UIManager.put("OptionPane.yesButtonText", languageManager.get("BUTTON_YES"));
+        UIManager.put("OptionPane.noButtonText", languageManager.get("BUTTON_NO"));
         fileMenu.setText(languageManager.get("FILE_MENU"));
         saveMenuItem.setText(languageManager.get("SAVE_MENU"));
         saveAsImageMenuItem.setText(languageManager.get("SAVE_IMAGE_MENU"));
@@ -2315,25 +2320,145 @@ public class AtbashCipherGUI extends JFrame {
                 if (!info.notes.isBlank()) {
                     message += "\n\n" + info.notes;
                 }
-                Object[] options = {
-                        languageManager.get("UPDATE_DOWNLOAD"),
-                        languageManager.get("UPDATE_LATER"),
-                        languageManager.get("UPDATE_SKIP")
-                };
+                // 설치 파일 주소와 지문이 있으면 [지금 업데이트]를 맨 앞에 추가
+                final String install = languageManager.get("UPDATE_INSTALL_NOW");
+                final String download = languageManager.get("UPDATE_DOWNLOAD");
+                final String later = languageManager.get("UPDATE_LATER");
+                final String skip = languageManager.get("UPDATE_SKIP");
+                Object[] options = info.canAutoInstall()
+                        ? new Object[]{install, download, later, skip}
+                        : new Object[]{download, later, skip};
                 int choice = JOptionPane.showOptionDialog(AtbashCipherGUI.this, message,
                         languageManager.get("UPDATE_AVAILABLE_TITLE"), JOptionPane.DEFAULT_OPTION,
                         JOptionPane.INFORMATION_MESSAGE, null, options, options[0]);
-                if (choice == 0) {
-                    try {
-                        java.awt.Desktop.getDesktop().browse(new java.net.URI(info.downloadUrl));
-                    } catch (Exception ex) {
-                        JOptionPane.showMessageDialog(AtbashCipherGUI.this, info.downloadUrl);
-                    }
-                } else if (choice == 2) {
+                Object picked = choice >= 0 ? options[choice] : later;
+                if (picked == install) {
+                    startAutoUpdate(info);
+                } else if (picked == download) {
+                    openDownloadPage(info);
+                } else if (picked == skip) {
                     prefs.put("skippedVersion", info.version);
                 }
             }
         }.execute();
+    }
+
+    private void openDownloadPage(UpdateChecker.UpdateInfo info) {
+        try {
+            java.awt.Desktop.getDesktop().browse(new java.net.URI(info.downloadUrl));
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(AtbashCipherGUI.this, info.downloadUrl);
+        }
+    }
+
+    /**
+     * 자동 업데이트: 설치 파일을 내려받고(진행률 표시) 지문을 확인한 뒤,
+     * 설치 프로그램을 실행하고 앱을 종료합니다. 실패하면 다운로드 페이지를 안내합니다.
+     */
+    private void startAutoUpdate(UpdateChecker.UpdateInfo info) {
+        javax.swing.JDialog dialog = new javax.swing.JDialog(this, languageManager.get("UPDATE_AVAILABLE_TITLE"), false);
+        JProgressBar bar = new JProgressBar(0, 100);
+        bar.setStringPainted(true);
+        JLabel status = new JLabel(languageManager.get("UPDATE_DOWNLOADING").replace("{0}", info.version));
+        JButton cancel = new JButton(languageManager.get("UPDATE_CANCEL"));
+
+        JPanel panel = new JPanel(new BorderLayout(8, 8));
+        panel.setBorder(BorderFactory.createEmptyBorder(14, 14, 14, 14));
+        panel.add(status, BorderLayout.NORTH);
+        panel.add(bar, BorderLayout.CENTER);
+        JPanel south = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        south.add(cancel);
+        panel.add(south, BorderLayout.SOUTH);
+        dialog.setContentPane(panel);
+        dialog.setSize(420, 150);
+        dialog.setLocationRelativeTo(this);
+        dialog.setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
+
+        SwingWorker<File, long[]> worker = new SwingWorker<>() {
+            @Override
+            protected File doInBackground() throws Exception {
+                final SwingWorker<File, long[]> self = this;
+                File file = UpdateInstaller.download(info.installerUrl, new UpdateInstaller.Progress() {
+                    @Override
+                    public void update(long downloaded, long total) {
+                        publish(new long[]{downloaded, total});
+                    }
+
+                    @Override
+                    public boolean isCancelled() {
+                        return self.isCancelled(); // [취소] 버튼을 눌렀는지
+                    }
+                });
+                if (file != null) {
+                    UpdateInstaller.verify(file, info.sha256);
+                }
+                return file;
+            }
+
+            @Override
+            protected void process(List<long[]> chunks) {
+                long[] last = chunks.get(chunks.size() - 1);
+                if (last[1] > 0) {
+                    bar.setValue((int) (last[0] * 100 / last[1]));
+                    bar.setString(String.format("%.1f / %.1f MB", last[0] / 1048576.0, last[1] / 1048576.0));
+                } else {
+                    bar.setIndeterminate(true);
+                    bar.setString(String.format("%.1f MB", last[0] / 1048576.0));
+                }
+            }
+
+            @Override
+            protected void done() {
+                dialog.dispose();
+                if (isCancelled()) return;
+
+                File installer;
+                try {
+                    installer = get();
+                } catch (Exception ex) {
+                    Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
+                    cause.printStackTrace();
+                    String key = cause instanceof UpdateInstaller.VerificationException
+                            ? "UPDATE_VERIFY_FAILED" : "UPDATE_DOWNLOAD_FAILED";
+                    offerManualDownload(info, languageManager.get(key));
+                    return;
+                }
+                if (installer == null) return; // cancelled
+
+                int ok = JOptionPane.showConfirmDialog(AtbashCipherGUI.this,
+                        languageManager.get("UPDATE_READY_MESSAGE").replace("{0}", info.version),
+                        languageManager.get("UPDATE_AVAILABLE_TITLE"), JOptionPane.OK_CANCEL_OPTION,
+                        JOptionPane.INFORMATION_MESSAGE);
+                if (ok != JOptionPane.OK_OPTION) return;
+
+                try {
+                    UpdateInstaller.launchInstaller(installer);
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                    offerManualDownload(info, languageManager.get("UPDATE_LAUNCH_FAILED"));
+                    return;
+                }
+                // 설치 프로그램이 파일을 바꿀 수 있도록 앱 종료 (창 크기는 저장)
+                saveWindowGeometry();
+                dispose();
+                System.exit(0);
+            }
+        };
+
+        cancel.addActionListener(e -> worker.cancel(true));
+        worker.execute();
+        dialog.setVisible(true);
+    }
+
+    /** 자동 업데이트가 실패했을 때 이유를 보여주고 다운로드 페이지를 열지 물어봄 */
+    private void offerManualDownload(UpdateChecker.UpdateInfo info, String reason) {
+        int open = JOptionPane.showConfirmDialog(this,
+                reason + "\n\n" + languageManager.get("UPDATE_OPEN_PAGE_INSTEAD"),
+                languageManager.get("UPDATE_AVAILABLE_TITLE"), JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
+        if (open == JOptionPane.YES_OPTION) {
+            openDownloadPage(info);
+        }
     }
 
     private void showHelpDialog() {
