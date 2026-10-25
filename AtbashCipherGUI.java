@@ -174,6 +174,34 @@ public class AtbashCipherGUI extends JFrame {
     private JSpinner parameterSpinner;
     private JLabel keywordLabel;
     private JTextField keywordField;
+    private JPasswordField passwordField; // AES 텍스트 암호화용 (저장하지 않음)
+
+    // 변환 방식 목록의 순서. 저장된 설정(cipherMode)이 이 번호를 쓰므로
+    // 새 항목은 반드시 맨 뒤에 추가할 것.
+    private static final int CIPHER_ATBASH = 0;
+    private static final int CIPHER_MORSE = 1;
+    private static final int CIPHER_BINARY = 2;
+    private static final int CIPHER_CAESAR_ENC = 3;
+    private static final int CIPHER_CAESAR_DEC = 4;
+    private static final int CIPHER_SCYTALE_ENC = 5;
+    private static final int CIPHER_SCYTALE_DEC = 6;
+    private static final int CIPHER_VIGENERE_ENC = 7;
+    private static final int CIPHER_VIGENERE_DEC = 8;
+    private static final int CIPHER_AES_TEXT_ENC = 9;
+    private static final int CIPHER_AES_TEXT_DEC = 10;
+    private static final int CIPHER_BASE64_ENC = 11;
+    private static final int CIPHER_BASE64_DEC = 12;
+    private static final int CIPHER_HEX_ENC = 13;
+    private static final int CIPHER_HEX_DEC = 14;
+    private static final int CIPHER_URL_ENC = 15;
+    private static final int CIPHER_URL_DEC = 16;
+    private static final int CIPHER_ROT13 = 17;
+    private static final int CIPHER_HANGUL_ENC = 18;
+    private static final int CIPHER_HANGUL_DEC = 19;
+
+    private static boolean isAesTextMode(int index) {
+        return index == CIPHER_AES_TEXT_ENC || index == CIPHER_AES_TEXT_DEC;
+    }
     private Timer feedbackTimer;
     private Timer animationTimer;
 
@@ -489,23 +517,35 @@ public class AtbashCipherGUI extends JFrame {
         // Default to hiding second parameter
         keywordLabel.setVisible(false);
         keywordField.setVisible(false);
+        passwordField.setVisible(false);
         parameterLabel.setVisible(true);
         parameterSpinner.setVisible(true);
 
-        if (selectedIndex >= 3 && selectedIndex <= 4) { // Caesar
+        if (selectedIndex == CIPHER_CAESAR_ENC || selectedIndex == CIPHER_CAESAR_DEC) {
             parameterLabel.setText(languageManager.get("PARAM_SHIFT_KEY"));
             parameterSpinner.setModel(new SpinnerNumberModel(prefs.getInt("caesarShift", 3), -1000, 1000, 1));
             showPanel = true;
-        } else if (selectedIndex >= 5 && selectedIndex <= 6) { // Scytale
+        } else if (selectedIndex == CIPHER_SCYTALE_ENC || selectedIndex == CIPHER_SCYTALE_DEC) {
             parameterLabel.setText(languageManager.get("PARAM_DIAMETER"));
             parameterSpinner.setModel(new SpinnerNumberModel(prefs.getInt("scytaleDiameter", 5), 1, 1000, 1));
             showPanel = true;
-        } else if (selectedIndex >= 7 && selectedIndex <= 8) { // Vigenere
+        } else if (selectedIndex == CIPHER_HANGUL_ENC || selectedIndex == CIPHER_HANGUL_DEC) {
+            parameterLabel.setText(languageManager.get("PARAM_SHIFT_KEY"));
+            parameterSpinner.setModel(new SpinnerNumberModel(prefs.getInt("hangulShift", 3), -1000, 1000, 1));
+            showPanel = true;
+        } else if (selectedIndex == CIPHER_VIGENERE_ENC || selectedIndex == CIPHER_VIGENERE_DEC) {
             parameterLabel.setVisible(false);
             parameterSpinner.setVisible(false);
             keywordLabel.setText(languageManager.get("PARAM_KEYWORD"));
             keywordLabel.setVisible(true);
             keywordField.setVisible(true);
+            showPanel = true;
+        } else if (isAesTextMode(selectedIndex)) {
+            parameterLabel.setVisible(false);
+            parameterSpinner.setVisible(false);
+            keywordLabel.setText(languageManager.get("PARAM_PASSWORD"));
+            keywordLabel.setVisible(true);
+            passwordField.setVisible(true);
             showPanel = true;
         }
 
@@ -855,6 +895,18 @@ public class AtbashCipherGUI extends JFrame {
         cipherSelector.addItem(languageManager.get("CIPHER_SCYTALE_DECRYPT"));
         cipherSelector.addItem(languageManager.get("CIPHER_VIGENERE_ENCRYPT"));
         cipherSelector.addItem(languageManager.get("CIPHER_VIGENERE_DECRYPT"));
+        // 8.0.0 에서 추가 (순서는 CIPHER_* 상수와 같아야 함)
+        cipherSelector.addItem(languageManager.get("CIPHER_AES_TEXT_ENCRYPT"));
+        cipherSelector.addItem(languageManager.get("CIPHER_AES_TEXT_DECRYPT"));
+        cipherSelector.addItem(languageManager.get("CIPHER_BASE64_ENCODE"));
+        cipherSelector.addItem(languageManager.get("CIPHER_BASE64_DECODE"));
+        cipherSelector.addItem(languageManager.get("CIPHER_HEX_ENCODE"));
+        cipherSelector.addItem(languageManager.get("CIPHER_HEX_DECODE"));
+        cipherSelector.addItem(languageManager.get("CIPHER_URL_ENCODE"));
+        cipherSelector.addItem(languageManager.get("CIPHER_URL_DECODE"));
+        cipherSelector.addItem(languageManager.get("CIPHER_ROT13"));
+        cipherSelector.addItem(languageManager.get("CIPHER_HANGUL_ENCRYPT"));
+        cipherSelector.addItem(languageManager.get("CIPHER_HANGUL_DECRYPT"));
 
         cipherSelector.setSelectedIndex(selectedIndex);
         // Update parameter label language if it's visible
@@ -921,6 +973,12 @@ public class AtbashCipherGUI extends JFrame {
             keywordField.setForeground(theme.foreground);
             keywordField.setCaretColor(theme.foreground);
             keywordField.setBorder(BorderFactory.createLineBorder(theme.border));
+        }
+        if (passwordField != null) {
+            passwordField.setBackground(theme.textAreaBg);
+            passwordField.setForeground(theme.foreground);
+            passwordField.setCaretColor(theme.foreground);
+            passwordField.setBorder(BorderFactory.createLineBorder(theme.border));
         }
         if (feedbackLabel != null) feedbackLabel.setForeground(theme.primaryButton);
 
@@ -1154,10 +1212,13 @@ public class AtbashCipherGUI extends JFrame {
         parameterSpinner = new JSpinner();
         keywordLabel = new JLabel();
         keywordField = new JTextField(10);
+        passwordField = new JPasswordField(12);
+        passwordField.setVisible(false);
         parameterPanel.add(parameterLabel);
         parameterPanel.add(parameterSpinner);
         parameterPanel.add(keywordLabel);
         parameterPanel.add(keywordField);
+        parameterPanel.add(passwordField);
         parameterPanel.setVisible(false); // Initially hidden
     }
 
@@ -1289,8 +1350,10 @@ public class AtbashCipherGUI extends JFrame {
             private void handleLiveUpdate() {
                 if (livePreviewMenuItem.isSelected()) {
                     int idx = cipherSelector.getSelectedIndex();
+                    // AES는 매번 키를 새로 만드느라 느리고 결과도 매번 달라서 실시간 변환에서 제외
+                    if (isAesTextMode(idx)) return;
                     int k = (Integer) parameterSpinner.getValue();
-                    String kw = keywordField.getText();
+                    String kw = currentKeyword(idx);
                     String result = performTransformation(inputTextArea.getText(), idx, k, kw);
                     
                     // Skip animation for live preview for better performance
@@ -1310,9 +1373,9 @@ public class AtbashCipherGUI extends JFrame {
             }
             updateParameterPanel(selectedIndex);
             // Trigger update if live preview is on
-            if (livePreviewMenuItem.isSelected()) {
-                String result = performTransformation(inputTextArea.getText(), selectedIndex, 
-                    (Integer) parameterSpinner.getValue(), keywordField.getText());
+            if (livePreviewMenuItem.isSelected() && !isAesTextMode(selectedIndex)) {
+                String result = performTransformation(inputTextArea.getText(), selectedIndex,
+                    (Integer) parameterSpinner.getValue(), currentKeyword(selectedIndex));
                 outputTextArea.setText(result);
             }
         };
@@ -1326,7 +1389,7 @@ public class AtbashCipherGUI extends JFrame {
             transformButton.setEnabled(false);
             outputTextArea.setText(""); // Clear previous result
             String currentInput = inputTextArea.getText(); // 변환 시점의 텍스트를 캡처합니다.
-            String keyword = keywordField.getText();
+            String keyword = currentKeyword(cipherSelector.getSelectedIndex());
 
             // Use a SwingWorker to perform the transformation off the EDT
             CipherAnimationWorker worker = new CipherAnimationWorker(currentInput, keyword) {
@@ -2322,8 +2385,53 @@ public class AtbashCipherGUI extends JFrame {
             case 8: // Vigenere Decrypt
                 transformedText = VigenereCipher.decrypt(inputText, keyword);
                 break;
+            default:
+                transformedText = performNewTransformation(inputText, selectedCipherIndex, key, keyword);
+                break;
         }
         return transformedText;
+    }
+
+    /**
+     * 8.0.0 에서 추가한 변환들. 되돌리기(디코딩/복호화)에 실패하면
+     * 예외 대신 안내 문구를 결과로 돌려줍니다.
+     * AES 모드에서는 keyword 자리에 비밀번호가 들어옵니다.
+     */
+    private String performNewTransformation(String inputText, int index, int key, String keyword) {
+        try {
+            switch (index) {
+                case CIPHER_AES_TEXT_ENC:
+                case CIPHER_AES_TEXT_DEC:
+                    if (keyword == null || keyword.isEmpty()) {
+                        return languageManager.get("AES_TEXT_NO_PASSWORD");
+                    }
+                    if (inputText.isEmpty()) return "";
+                    return index == CIPHER_AES_TEXT_ENC
+                            ? AESFileCipher.encryptText(inputText, keyword)
+                            : AESFileCipher.decryptText(inputText, keyword);
+                case CIPHER_BASE64_ENC: return TextCodec.toBase64(inputText);
+                case CIPHER_BASE64_DEC: return TextCodec.fromBase64(inputText);
+                case CIPHER_HEX_ENC:    return TextCodec.toHex(inputText);
+                case CIPHER_HEX_DEC:    return TextCodec.fromHex(inputText);
+                case CIPHER_URL_ENC:    return TextCodec.toUrl(inputText);
+                case CIPHER_URL_DEC:    return TextCodec.fromUrl(inputText);
+                case CIPHER_ROT13:      return TextCodec.rot13(inputText);
+                case CIPHER_HANGUL_ENC: return HangulCipher.encrypt(inputText, key);
+                case CIPHER_HANGUL_DEC: return HangulCipher.decrypt(inputText, key);
+                default:                return "";
+            }
+        } catch (javax.crypto.AEADBadTagException e) {
+            return languageManager.get("AES_TEXT_DECRYPT_ERROR");
+        } catch (Exception e) {
+            return isAesTextMode(index)
+                    ? languageManager.get("AES_TEXT_DECRYPT_ERROR")
+                    : languageManager.get("DECODE_ERROR");
+        }
+    }
+
+    /** 현재 변환 방식에 맞는 키워드(비즈네르) 또는 비밀번호(AES)를 돌려줍니다. */
+    private String currentKeyword(int index) {
+        return isAesTextMode(index) ? new String(passwordField.getPassword()) : keywordField.getText();
     }
 
     /**
@@ -2504,10 +2612,12 @@ public class AtbashCipherGUI extends JFrame {
         int selectedIndex = cipherSelector.getSelectedIndex();
         Object value = parameterSpinner.getValue();
         if (value instanceof Integer) {
-            if (selectedIndex >= 3 && selectedIndex <= 4) { // Caesar
+            if (selectedIndex == CIPHER_CAESAR_ENC || selectedIndex == CIPHER_CAESAR_DEC) {
                 prefs.putInt("caesarShift", (Integer) value);
-            } else if (selectedIndex >= 5 && selectedIndex <= 6) { // Scytale
+            } else if (selectedIndex == CIPHER_SCYTALE_ENC || selectedIndex == CIPHER_SCYTALE_DEC) {
                 prefs.putInt("scytaleDiameter", (Integer) value);
+            } else if (selectedIndex == CIPHER_HANGUL_ENC || selectedIndex == CIPHER_HANGUL_DEC) {
+                prefs.putInt("hangulShift", (Integer) value);
             }
         }
         try { prefs.flush(); } catch (Exception e) {}

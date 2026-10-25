@@ -83,5 +83,20 @@
   "UPDATE_CHECK_FAILED": "アップデート情報を取得できませんでした。インターネット接続を確認してください。",
   "LOAD_CLIPBOARD_OCR_MENU": "クリップボードの画像からテキストを読み取る",
   "CLIPBOARD_NO_IMAGE_MESSAGE": "クリップボードに画像がありません。\n画面をキャプチャ (Win+Shift+S) するか画像をコピーしてから、もう一度お試しください。",
-  "DROP_ENCRYPT_CONFIRM": "{0} 個のファイルを AES で暗号化しますか?"
+  "DROP_ENCRYPT_CONFIRM": "{0} 個のファイルを AES で暗号化しますか?",
+  "CIPHER_AES_TEXT_ENCRYPT": "AES テキスト (暗号化)",
+  "CIPHER_AES_TEXT_DECRYPT": "AES テキスト (復号)",
+  "CIPHER_BASE64_ENCODE": "Base64 (エンコード)",
+  "CIPHER_BASE64_DECODE": "Base64 (デコード)",
+  "CIPHER_HEX_ENCODE": "16進数 Hex (エンコード)",
+  "CIPHER_HEX_DECODE": "16進数 Hex (デコード)",
+  "CIPHER_URL_ENCODE": "URL (エンコード)",
+  "CIPHER_URL_DECODE": "URL (デコード)",
+  "CIPHER_ROT13": "ROT13",
+  "CIPHER_HANGUL_ENCRYPT": "ハングル字母暗号 (暗号化)",
+  "CIPHER_HANGUL_DECRYPT": "ハングル字母暗号 (復号)",
+  "PARAM_PASSWORD": "パスワード",
+  "AES_TEXT_NO_PASSWORD": "パスワードを入力してから変換してください。",
+  "AES_TEXT_DECRYPT_ERROR": "復号できませんでした。パスワードが違うか、AES テキスト暗号化で作成された文字列ではありません。",
+  "DECODE_ERROR": "デコードできませんでした。入力がこの形式でエンコードされた文字列か確認してください。"
 }

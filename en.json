@@ -120,5 +120,20 @@
   "UPDATE_CHECK_FAILED": "Could not get update information. Please check your internet connection.",
   "LOAD_CLIPBOARD_OCR_MENU": "Read Text from Clipboard Image",
   "CLIPBOARD_NO_IMAGE_MESSAGE": "There is no image in the clipboard.\nTake a screenshot (Win+Shift+S) or copy an image, then try again.",
-  "DROP_ENCRYPT_CONFIRM": "Encrypt {0} file(s) with AES?"
+  "DROP_ENCRYPT_CONFIRM": "Encrypt {0} file(s) with AES?",
+  "CIPHER_AES_TEXT_ENCRYPT": "AES Text (Encrypt)",
+  "CIPHER_AES_TEXT_DECRYPT": "AES Text (Decrypt)",
+  "CIPHER_BASE64_ENCODE": "Base64 (Encode)",
+  "CIPHER_BASE64_DECODE": "Base64 (Decode)",
+  "CIPHER_HEX_ENCODE": "Hex (Encode)",
+  "CIPHER_HEX_DECODE": "Hex (Decode)",
+  "CIPHER_URL_ENCODE": "URL (Encode)",
+  "CIPHER_URL_DECODE": "URL (Decode)",
+  "CIPHER_ROT13": "ROT13",
+  "CIPHER_HANGUL_ENCRYPT": "Hangul Jamo (Encrypt)",
+  "CIPHER_HANGUL_DECRYPT": "Hangul Jamo (Decrypt)",
+  "PARAM_PASSWORD": "Password",
+  "AES_TEXT_NO_PASSWORD": "Enter a password, then transform.",
+  "AES_TEXT_DECRYPT_ERROR": "Could not decrypt. The password is wrong, or this is not text made by AES Text (Encrypt).",
+  "DECODE_ERROR": "Could not decode. Check that the input is encoded in this format."
 }

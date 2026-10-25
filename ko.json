@@ -120,5 +120,20 @@
   "UPDATE_CHECK_FAILED": "업데이트 정보를 가져오지 못했습니다. 인터넷 연결을 확인해주세요.",
   "LOAD_CLIPBOARD_OCR_MENU": "클립보드 이미지에서 텍스트 읽기",
   "CLIPBOARD_NO_IMAGE_MESSAGE": "클립보드에 이미지가 없습니다.\n화면을 캡처(Win+Shift+S)하거나 이미지를 복사한 뒤 다시 시도하세요.",
-  "DROP_ENCRYPT_CONFIRM": "파일 {0}개를 AES로 암호화할까요?"
+  "DROP_ENCRYPT_CONFIRM": "파일 {0}개를 AES로 암호화할까요?",
+  "CIPHER_AES_TEXT_ENCRYPT": "AES 텍스트 (암호화)",
+  "CIPHER_AES_TEXT_DECRYPT": "AES 텍스트 (복호화)",
+  "CIPHER_BASE64_ENCODE": "Base64 (인코딩)",
+  "CIPHER_BASE64_DECODE": "Base64 (디코딩)",
+  "CIPHER_HEX_ENCODE": "16진수 Hex (인코딩)",
+  "CIPHER_HEX_DECODE": "16진수 Hex (디코딩)",
+  "CIPHER_URL_ENCODE": "URL (인코딩)",
+  "CIPHER_URL_DECODE": "URL (디코딩)",
+  "CIPHER_ROT13": "ROT13",
+  "CIPHER_HANGUL_ENCRYPT": "한글 자모 암호 (암호화)",
+  "CIPHER_HANGUL_DECRYPT": "한글 자모 암호 (복호화)",
+  "PARAM_PASSWORD": "비밀번호",
+  "AES_TEXT_NO_PASSWORD": "비밀번호를 입력한 뒤 변환하세요.",
+  "AES_TEXT_DECRYPT_ERROR": "복호화하지 못했습니다. 비밀번호가 틀렸거나, AES 텍스트 암호화로 만든 문자열이 아닙니다.",
+  "DECODE_ERROR": "디코딩하지 못했습니다. 입력이 이 형식으로 인코딩된 문자열인지 확인하세요."
 }

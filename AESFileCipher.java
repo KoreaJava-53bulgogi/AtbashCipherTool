@@ -118,6 +118,47 @@ public class AESFileCipher {
     }
 
     /**
+     * 텍스트를 암호화해 메신저 등에 붙여넣을 수 있는 Base64 문자열로 만듭니다.
+     * 형식: Base64( salt(16) | iv(12) | 암호문+인증태그 ) — 파일 암호화와 같은 방식
+     */
+    public static String encryptText(String plainText, String password) throws Exception {
+        SecureRandom random = new SecureRandom();
+        byte[] salt = new byte[SALT_LENGTH];
+        random.nextBytes(salt);
+        byte[] iv = new byte[IV_LENGTH];
+        random.nextBytes(iv);
+
+        Cipher cipher = Cipher.getInstance(CIPHER_MODE);
+        cipher.init(Cipher.ENCRYPT_MODE, getKeyFromPassword(password, salt), new GCMParameterSpec(TAG_LENGTH, iv));
+        byte[] encrypted = cipher.doFinal(plainText.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+        byte[] out = new byte[SALT_LENGTH + IV_LENGTH + encrypted.length];
+        System.arraycopy(salt, 0, out, 0, SALT_LENGTH);
+        System.arraycopy(iv, 0, out, SALT_LENGTH, IV_LENGTH);
+        System.arraycopy(encrypted, 0, out, SALT_LENGTH + IV_LENGTH, encrypted.length);
+        return java.util.Base64.getEncoder().encodeToString(out);
+    }
+
+    /**
+     * encryptText 로 만든 문자열을 원래 텍스트로 되돌립니다.
+     * @throws javax.crypto.AEADBadTagException 비밀번호가 틀리거나 암호문이 손상된 경우
+     * @throws IllegalArgumentException 암호문 형식이 아닌 경우
+     */
+    public static String decryptText(String encoded, String password) throws Exception {
+        byte[] data = java.util.Base64.getDecoder().decode(encoded.replaceAll("\\s", ""));
+        if (data.length < SALT_LENGTH + IV_LENGTH + TAG_LENGTH / 8) {
+            throw new IllegalArgumentException("too short");
+        }
+        byte[] salt = java.util.Arrays.copyOfRange(data, 0, SALT_LENGTH);
+        byte[] iv = java.util.Arrays.copyOfRange(data, SALT_LENGTH, SALT_LENGTH + IV_LENGTH);
+
+        Cipher cipher = Cipher.getInstance(CIPHER_MODE);
+        cipher.init(Cipher.DECRYPT_MODE, getKeyFromPassword(password, salt), new GCMParameterSpec(TAG_LENGTH, iv));
+        byte[] plain = cipher.doFinal(data, SALT_LENGTH + IV_LENGTH, data.length - SALT_LENGTH - IV_LENGTH);
+        return new String(plain, java.nio.charset.StandardCharsets.UTF_8);
+    }
+
+    /**
      * 파일을 안전하게 삭제합니다. 삭제 전 무작위 데이터로 덮어씌워 복구를 방지합니다.
      * @param file 삭제할 파일
      * @throws IOException 파일 접근 오류 시
