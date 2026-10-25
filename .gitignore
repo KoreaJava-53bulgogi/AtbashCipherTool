@@ -17,7 +17,7 @@ JSON/
 lib/
 Intel/
 desktop.ini
-version.json
+# version.json is published for update checks (see UpdateChecker)
 
 # Secrets / login tokens - never commit
 credentials.json

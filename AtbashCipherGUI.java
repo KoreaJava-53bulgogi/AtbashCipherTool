@@ -156,7 +156,7 @@ public class AtbashCipherGUI extends JFrame {
         KOREAN, ENGLISH, CHINESE, JAPANESE
     }
 
-    private static final String APP_VERSION = "7.1.0";
+    private static final String APP_VERSION = "8.0.0";
 
     private JTextArea inputTextArea;
     private JTextArea outputTextArea;

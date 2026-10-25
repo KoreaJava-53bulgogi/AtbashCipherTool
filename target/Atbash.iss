@@ -1,10 +1,10 @@
 ﻿[Setup]
 AppName=Atbash Cipher Tool
-AppVersion=7.1.0
+AppVersion=8.0.0
 DefaultDirName={autopf}\Atbash Cipher Tool
 DefaultGroupName=Atbash Cipher Tool
 OutputDir=Output
-OutputBaseFilename=Setup_7.1.0
+OutputBaseFilename=Setup_8.0.0
 Compression=lzma
 SolidCompression=yes
 WizardImageFile=installer.bmp
@@ -34,12 +34,12 @@ korean.WelcomeLabel1=Atbash Cipher Tool 설치를 시작합니다
 ; [Code]에서 쓰는 언어별 문구. 코드에서는 CustomMessage('이름')으로 불러옴
 [CustomMessages]
 korean.FeatureTitle=주요 기능
-korean.Feature1=· 아트배쉬 · 카이사르 · 비즈네르 · AES 암호화
-korean.Feature2=· 이미지 속 글자 인식(OCR, 영어/한국어)
+korean.Feature1=· 아트배쉬 · 카이사르 · 비즈네르 · 한글 자모 · AES 암호화
+korean.Feature2=· 이미지·캡처 글자 인식(OCR), QR 코드 내보내기
 korean.Feature3=· 한국어 · English · 日本語 · 中文 지원
 english.FeatureTitle=Key Features
-english.Feature1=· Atbash · Caesar · Vigenere · AES encryption
-english.Feature2=· Text recognition in images (OCR, English/Korean)
+english.Feature1=· Atbash · Caesar · Vigenere · Hangul · AES encryption
+english.Feature2=· Text recognition from images and screenshots (OCR), QR export
 english.Feature3=· Korean · English · Japanese · Chinese UI
 korean.OptionTitle=추가 옵션
 korean.OptionDesc=원하는 항목을 선택하세요
