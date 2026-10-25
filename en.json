@@ -109,5 +109,13 @@
   "OVERWRITE_FILE_CONFIRM_MESSAGE": "The file ''{0}'' already exists. Do you want to overwrite it?",
   "LOAD_IMAGE_SEARCH_MENU": "Load Text from Naver Image Search...",
   "IMAGE_SEARCH_DIALOG_TITLE": "Naver Image Search",
-  "IMAGE_SEARCH_SELECT_PROMPT": "Select an image to perform OCR on:"
+  "IMAGE_SEARCH_SELECT_PROMPT": "Select an image to perform OCR on:",
+  "CHECK_UPDATE_MENU": "Check for Updates",
+  "UPDATE_AVAILABLE_TITLE": "Update Available",
+  "UPDATE_AVAILABLE_MESSAGE": "Version {0} is available. (You have {1})",
+  "UPDATE_DOWNLOAD": "Open Download Page",
+  "UPDATE_LATER": "Later",
+  "UPDATE_SKIP": "Skip This Version",
+  "UPDATE_LATEST_MESSAGE": "You are using the latest version ({0}).",
+  "UPDATE_CHECK_FAILED": "Could not get update information. Please check your internet connection."
 }

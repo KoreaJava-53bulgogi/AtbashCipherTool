@@ -109,5 +109,13 @@
   "OVERWRITE_FILE_CONFIRM_MESSAGE": "파일 ''{0}''이(가) 이미 존재합니다. 덮어쓰시겠습니까?",
   "LOAD_IMAGE_SEARCH_MENU": "네이버 이미지 검색 후 OCR...",
   "IMAGE_SEARCH_DIALOG_TITLE": "네이버 이미지 검색",
-  "IMAGE_SEARCH_SELECT_PROMPT": "OCR을 수행할 이미지를 선택하세요:"
+  "IMAGE_SEARCH_SELECT_PROMPT": "OCR을 수행할 이미지를 선택하세요:",
+  "CHECK_UPDATE_MENU": "업데이트 확인",
+  "UPDATE_AVAILABLE_TITLE": "새 버전 알림",
+  "UPDATE_AVAILABLE_MESSAGE": "새 버전 {0}이(가) 나왔습니다. (현재 버전: {1})",
+  "UPDATE_DOWNLOAD": "다운로드 페이지 열기",
+  "UPDATE_LATER": "나중에",
+  "UPDATE_SKIP": "이 버전 건너뛰기",
+  "UPDATE_LATEST_MESSAGE": "최신 버전({0})을 사용하고 있습니다.",
+  "UPDATE_CHECK_FAILED": "업데이트 정보를 가져오지 못했습니다. 인터넷 연결을 확인해주세요."
 }

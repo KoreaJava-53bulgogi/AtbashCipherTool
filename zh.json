@@ -72,5 +72,13 @@
   "NO_CUSTOM_THEME_SELECTED_MESSAGE": "请先选择要删除的自定义主题。",
   "LOAD_IMAGE_SEARCH_MENU": "从Naver图像搜索加载OCR...",
   "IMAGE_SEARCH_DIALOG_TITLE": "Naver图像搜索",
-  "IMAGE_SEARCH_SELECT_PROMPT": "选择要执行OCR的图像："
+  "IMAGE_SEARCH_SELECT_PROMPT": "选择要执行OCR的图像：",
+  "CHECK_UPDATE_MENU": "检查更新",
+  "UPDATE_AVAILABLE_TITLE": "发现新版本",
+  "UPDATE_AVAILABLE_MESSAGE": "新版本 {0} 已发布。(当前版本: {1})",
+  "UPDATE_DOWNLOAD": "打开下载页面",
+  "UPDATE_LATER": "稍后",
+  "UPDATE_SKIP": "跳过此版本",
+  "UPDATE_LATEST_MESSAGE": "您正在使用最新版本 ({0})。",
+  "UPDATE_CHECK_FAILED": "无法获取更新信息。请检查网络连接。"
 }

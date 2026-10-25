@@ -208,6 +208,7 @@ public class AtbashCipherGUI extends JFrame {
     private JRadioButtonMenuItem japaneseMenuItem;
     private JMenu helpMenu;
     private JMenuItem aboutMenuItem;
+    private JMenuItem checkUpdateMenuItem;
     private JMenu customThemesMenu;
     private JMenuItem saveAsNewThemeMenuItem;
     private JMenuItem deleteThemeMenuItem;
@@ -231,6 +232,9 @@ public class AtbashCipherGUI extends JFrame {
         initMenu();
         initListeners();
         loadSettings();
+
+        // 하루에 한 번, 조용히 새 버전 확인 (창이 뜬 뒤 백그라운드에서)
+        SwingUtilities.invokeLater(() -> checkForUpdates(false));
     }
 
     /**
@@ -640,6 +644,8 @@ public class AtbashCipherGUI extends JFrame {
 
         helpMenu = new JMenu();
 
+        checkUpdateMenuItem = new JMenuItem();
+        helpMenu.add(checkUpdateMenuItem);
         aboutMenuItem = new JMenuItem();
         helpMenu.add(aboutMenuItem);
 
@@ -815,6 +821,7 @@ public class AtbashCipherGUI extends JFrame {
 
         helpMenu.setText(languageManager.get("HELP_MENU"));
         aboutMenuItem.setText(languageManager.get("ABOUT_MENU"));
+        checkUpdateMenuItem.setText(languageManager.get("CHECK_UPDATE_MENU"));
         inputLabel.setText(languageManager.get("INPUT_LABEL"));
         outputLabel.setText(languageManager.get("OUTPUT_LABEL"));
         transformButton.setText(languageManager.get("TRANSFORM_BUTTON"));
@@ -1678,6 +1685,7 @@ public class AtbashCipherGUI extends JFrame {
         });
 
         aboutMenuItem.addActionListener(e -> showHelpDialog());
+        checkUpdateMenuItem.addActionListener(e -> checkForUpdates(true));
 
         saveAsNewThemeMenuItem.addActionListener(e -> promptAndSaveNewTheme());
         deleteThemeMenuItem.addActionListener(e -> deleteSelectedCustomTheme());
@@ -1978,6 +1986,78 @@ public class AtbashCipherGUI extends JFrame {
         });
         feedbackTimer.setRepeats(true);
         feedbackTimer.start();
+    }
+
+    /**
+     * 새 버전이 있는지 확인합니다.
+     * @param manual true: 메뉴에서 직접 누름 (결과를 항상 알려줌)
+     *               false: 시작할 때 자동 확인 (하루 한 번, 새 버전이 있을 때만 알림)
+     */
+    private void checkForUpdates(boolean manual) {
+        final long dayMs = 24L * 60 * 60 * 1000;
+        long now = System.currentTimeMillis();
+        if (!manual && now - prefs.getLong("lastUpdateCheck", 0) < dayMs) {
+            return;
+        }
+
+        new SwingWorker<UpdateChecker.UpdateInfo, Void>() {
+            @Override
+            protected UpdateChecker.UpdateInfo doInBackground() throws Exception {
+                return UpdateChecker.fetchLatest();
+            }
+
+            @Override
+            protected void done() {
+                UpdateChecker.UpdateInfo info;
+                try {
+                    info = get();
+                } catch (Exception ex) {
+                    // 자동 확인 실패(오프라인 등)는 조용히 넘어감
+                    if (manual) {
+                        Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
+                        JOptionPane.showMessageDialog(AtbashCipherGUI.this,
+                                languageManager.get("UPDATE_CHECK_FAILED") + "\n" + cause.getMessage(),
+                                languageManager.get("CHECK_UPDATE_MENU"), JOptionPane.WARNING_MESSAGE);
+                    }
+                    return;
+                }
+                prefs.putLong("lastUpdateCheck", System.currentTimeMillis());
+
+                boolean newer = UpdateChecker.compareVersions(info.version, APP_VERSION) > 0;
+                boolean skipped = info.version.equals(prefs.get("skippedVersion", ""));
+                if (!newer || (!manual && skipped)) {
+                    if (manual) {
+                        JOptionPane.showMessageDialog(AtbashCipherGUI.this,
+                                languageManager.get("UPDATE_LATEST_MESSAGE").replace("{0}", APP_VERSION),
+                                languageManager.get("CHECK_UPDATE_MENU"), JOptionPane.INFORMATION_MESSAGE);
+                    }
+                    return;
+                }
+
+                String message = languageManager.get("UPDATE_AVAILABLE_MESSAGE")
+                        .replace("{0}", info.version).replace("{1}", APP_VERSION);
+                if (!info.notes.isBlank()) {
+                    message += "\n\n" + info.notes;
+                }
+                Object[] options = {
+                        languageManager.get("UPDATE_DOWNLOAD"),
+                        languageManager.get("UPDATE_LATER"),
+                        languageManager.get("UPDATE_SKIP")
+                };
+                int choice = JOptionPane.showOptionDialog(AtbashCipherGUI.this, message,
+                        languageManager.get("UPDATE_AVAILABLE_TITLE"), JOptionPane.DEFAULT_OPTION,
+                        JOptionPane.INFORMATION_MESSAGE, null, options, options[0]);
+                if (choice == 0) {
+                    try {
+                        java.awt.Desktop.getDesktop().browse(new java.net.URI(info.downloadUrl));
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(AtbashCipherGUI.this, info.downloadUrl);
+                    }
+                } else if (choice == 2) {
+                    prefs.put("skippedVersion", info.version);
+                }
+            }
+        }.execute();
     }
 
     private void showHelpDialog() {

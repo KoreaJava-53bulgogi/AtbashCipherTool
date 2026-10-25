@@ -72,5 +72,13 @@
   "NO_CUSTOM_THEME_SELECTED_MESSAGE": "最初に削除するカスタムテーマを選択してください。",
   "LOAD_IMAGE_SEARCH_MENU": "Naver画像検索からOCR...",
   "IMAGE_SEARCH_DIALOG_TITLE": "Naver画像検索",
-  "IMAGE_SEARCH_SELECT_PROMPT": "OCRを実行する画像を選択してください："
+  "IMAGE_SEARCH_SELECT_PROMPT": "OCRを実行する画像を選択してください：",
+  "CHECK_UPDATE_MENU": "アップデートを確認",
+  "UPDATE_AVAILABLE_TITLE": "新しいバージョン",
+  "UPDATE_AVAILABLE_MESSAGE": "新しいバージョン {0} が公開されています。(現在のバージョン: {1})",
+  "UPDATE_DOWNLOAD": "ダウンロードページを開く",
+  "UPDATE_LATER": "後で",
+  "UPDATE_SKIP": "このバージョンをスキップ",
+  "UPDATE_LATEST_MESSAGE": "最新バージョン ({0}) を使用しています。",
+  "UPDATE_CHECK_FAILED": "アップデート情報を取得できませんでした。インターネット接続を確認してください。"
 }
