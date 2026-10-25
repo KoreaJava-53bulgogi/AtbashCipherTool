@@ -106,5 +106,8 @@
   "HISTORY_RESTORE": "呼び出す",
   "HISTORY_COPY_OUTPUT": "結果をコピー",
   "HISTORY_CLEAR": "すべて消去",
-  "HISTORY_CLOSE": "閉じる"
+  "HISTORY_CLOSE": "閉じる",
+  "SAVE_QR_MENU": "QR コードとして保存...",
+  "QR_SAVE_BUTTON": "PNG で保存",
+  "QR_TOO_LONG_MESSAGE": "結果が長すぎて 1 つの QR コードに収まりません。\n(英字で約 2,300 文字、日本語で約 700 文字まで)"
 }

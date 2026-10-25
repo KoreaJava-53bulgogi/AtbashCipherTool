@@ -143,5 +143,8 @@
   "HISTORY_RESTORE": "불러오기",
   "HISTORY_COPY_OUTPUT": "결과 복사",
   "HISTORY_CLEAR": "모두 지우기",
-  "HISTORY_CLOSE": "닫기"
+  "HISTORY_CLOSE": "닫기",
+  "SAVE_QR_MENU": "QR 코드로 저장...",
+  "QR_SAVE_BUTTON": "PNG로 저장",
+  "QR_TOO_LONG_MESSAGE": "결과가 너무 길어서 QR 코드 하나에 담을 수 없습니다.\n(한글 약 700자, 영문 약 2,300자까지 가능)"
 }

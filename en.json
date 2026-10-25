@@ -143,5 +143,8 @@
   "HISTORY_RESTORE": "Restore",
   "HISTORY_COPY_OUTPUT": "Copy Result",
   "HISTORY_CLEAR": "Clear All",
-  "HISTORY_CLOSE": "Close"
+  "HISTORY_CLOSE": "Close",
+  "SAVE_QR_MENU": "Save as QR Code...",
+  "QR_SAVE_BUTTON": "Save as PNG",
+  "QR_TOO_LONG_MESSAGE": "The result is too long to fit in one QR code.\n(Up to about 2,300 English letters or 700 Korean characters)"
 }

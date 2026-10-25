@@ -106,5 +106,8 @@
   "HISTORY_RESTORE": "恢复",
   "HISTORY_COPY_OUTPUT": "复制结果",
   "HISTORY_CLEAR": "全部清除",
-  "HISTORY_CLOSE": "关闭"
+  "HISTORY_CLOSE": "关闭",
+  "SAVE_QR_MENU": "保存为二维码...",
+  "QR_SAVE_BUTTON": "保存为 PNG",
+  "QR_TOO_LONG_MESSAGE": "结果太长,无法放入一个二维码。\n(英文约 2,300 个字符,中文约 700 个字符)"
 }

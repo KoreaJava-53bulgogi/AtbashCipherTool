@@ -220,6 +220,7 @@ public class AtbashCipherGUI extends JFrame {
     private JMenuItem loadFromImageMenuItem;
     private JMenuItem loadFromClipboardImageMenuItem;
     private JMenuItem historyMenuItem;
+    private JMenuItem saveAsQrMenuItem;
 
     /** 변환 기록 한 건. 앱을 닫으면 사라짐 (비밀번호/원문이 디스크에 남지 않도록) */
     private record HistoryEntry(java.time.LocalTime time, int cipherIndex, String cipherName,
@@ -642,6 +643,9 @@ public class AtbashCipherGUI extends JFrame {
         fileMenu.addSeparator();
         fileMenu.add(saveMenuItem);
         fileMenu.add(saveAsImageMenuItem);
+        saveAsQrMenuItem = new JMenuItem();
+        saveAsQrMenuItem.setIcon(saveImageIcon);
+        fileMenu.add(saveAsQrMenuItem);
 
         themeMenu = new JMenu();
         themeGroup = new ButtonGroup();
@@ -860,6 +864,7 @@ public class AtbashCipherGUI extends JFrame {
         loadFromImageMenuItem.setText(languageManager.get("LOAD_OCR_MENU"));
         loadFromClipboardImageMenuItem.setText(languageManager.get("LOAD_CLIPBOARD_OCR_MENU"));
         historyMenuItem.setText(languageManager.get("HISTORY_MENU"));
+        saveAsQrMenuItem.setText(languageManager.get("SAVE_QR_MENU"));
         loadFromSearchMenuItem.setText(languageManager.get("LOAD_SEARCH_MENU"));
         loadFromImageSearchMenuItem.setText(languageManager.get("LOAD_IMAGE_SEARCH_MENU"));
         encryptFileMenuItem.setText(languageManager.get("ENCRYPT_FILE_MENU"));
@@ -1450,6 +1455,7 @@ public class AtbashCipherGUI extends JFrame {
         });
 
         saveAsImageMenuItem.addActionListener(e -> saveOutputAsImage());
+        saveAsQrMenuItem.addActionListener(e -> showQrCodeDialog());
 
         saveMenuItem.addActionListener(e -> {
             JFileChooser fileChooser = new JFileChooser();
@@ -2858,6 +2864,50 @@ public class AtbashCipherGUI extends JFrame {
             } catch (IOException ex) {
                 JOptionPane.showMessageDialog(this, languageManager.get("SAVE_IMAGE_ERROR_MESSAGE") + ex.getMessage(), languageManager.get("SAVE_ERROR_TITLE"), JOptionPane.ERROR_MESSAGE);
             }
+        }
+    }
+
+    /** 결과 텍스트를 QR 코드로 미리 보여주고 PNG로 저장합니다. */
+    private void showQrCodeDialog() {
+        String text = outputTextArea.getText();
+        if (text == null || text.isBlank()) {
+            JOptionPane.showMessageDialog(this,
+                    languageManager.get("SAVE_IMAGE_NO_CONTENT_MESSAGE"),
+                    languageManager.get("SAVE_IMAGE_NO_CONTENT_TITLE"),
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        BufferedImage qr;
+        try {
+            qr = QrCodeGenerator.create(text, 360);
+        } catch (QrCodeGenerator.TooLongException ex) {
+            JOptionPane.showMessageDialog(this, languageManager.get("QR_TOO_LONG_MESSAGE"),
+                    languageManager.get("SAVE_QR_MENU"), JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        Object[] options = {languageManager.get("QR_SAVE_BUTTON"), languageManager.get("HISTORY_CLOSE")};
+        int choice = JOptionPane.showOptionDialog(this, new JLabel(new ImageIcon(qr)),
+                languageManager.get("SAVE_QR_MENU"), JOptionPane.DEFAULT_OPTION,
+                JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
+        if (choice != 0) return;
+
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle(languageManager.get("SAVE_QR_MENU"));
+        fileChooser.setFileFilter(new FileNameExtensionFilter("PNG Images (*.png)", "png"));
+        fileChooser.setSelectedFile(new File("qrcode.png"));
+        if (fileChooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return;
+
+        File file = fileChooser.getSelectedFile();
+        if (!file.getName().toLowerCase().endsWith(".png")) {
+            file = new File(file.getParentFile(), file.getName() + ".png");
+        }
+        try {
+            ImageIO.write(qr, "png", file);
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this, languageManager.get("SAVE_IMAGE_ERROR_MESSAGE") + ex.getMessage(),
+                    languageManager.get("SAVE_ERROR_TITLE"), JOptionPane.ERROR_MESSAGE);
         }
     }
 
