@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Launch4j 설정: target\AtbashCipherTool.jar 를 exe로 감쌉니다. (release.bat 에서 사용) -->
+<launch4jConfig>
+  <dontWrapJar>false</dontWrapJar>
+  <headerType>gui</headerType>
+  <jar>target\AtbashCipherTool.jar</jar>
+  <outfile>target\Release\AtbashCipherTool.exe</outfile>
+  <errTitle>Atbash Cipher Tool</errTitle>
+  <chdir>.</chdir>
+  <priority>normal</priority>
+  <stayAlive>false</stayAlive>
+  <restartOnCrash>false</restartOnCrash>
+  <icon>target\icon.ico</icon>
+  <jre>
+    <!-- exe 옆의 jre 폴더를 사용 (설치 프로그램이 함께 설치함) -->
+    <path>jre</path>
+    <requiresJdk>false</requiresJdk>
+    <requires64Bit>true</requires64Bit>
+    <minVersion>17</minVersion>
+    <maxVersion></maxVersion>
+  </jre>
+</launch4jConfig>

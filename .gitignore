@@ -1,0 +1,39 @@
+# Build output (rebuilt by release.bat)
+# target/ also holds installer source files, so keep those tracked.
+target/*
+!target/Atbash.iss
+!target/icon.ico
+!target/iconf.ico
+!target/installer.bmp
+!target/installer.png
+!target/logo.bmp
+dependency-reduced-pom.xml
+*.class
+
+# Old copies and unused files (kept on disk, not tracked)
+CLASS/
+JAVA/
+JSON/
+lib/
+Intel/
+desktop.ini
+version.json
+
+# Secrets / login tokens - never commit
+credentials.json
+tokens/
+
+# Editor files
+.vscode/
+.idea/
+*~
+
+# Naver API keys (packed into the jar at build time, never committed)
+naver.properties
+
+# IDE build output and project files (Eclipse / VS Code Java)
+bin/
+.project
+.classpath
+.settings/
+.factorypath
