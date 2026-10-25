@@ -23,6 +23,16 @@ set "LAUNCH4J=C:\Program Files (x86)\Launch4j\launch4jc.exe"
 set "ISCC=C:\Program Files\Inno Setup 7\ISCC.exe"
 set "TAR=%SystemRoot%\System32\tar.exe"
 
+rem Optional code signing. Skipped unless SIGN_PFX is set, e.g.
+rem   set SIGN_PFX=C:\certs\mycert.pfx
+rem   set SIGN_PASSWORD=(certificate password)
+rem   release.bat
+rem Do not write the password in this file.
+rem sign4j (from Launch4j) is needed so signing does not break the jar inside the exe.
+set "SIGNTOOL=C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x64\signtool.exe"
+set "SIGN4J=C:\Program Files (x86)\Launch4j\sign4j\sign4j.exe"
+set "TIMESTAMP_URL=http://timestamp.digicert.com"
+
 rem Java modules the app needs. To re-check after adding features, run:
 rem   jdeps --ignore-missing-deps --print-module-deps target\AtbashCipherTool.jar
 rem then add any new module here.
@@ -62,11 +72,21 @@ echo [3/5] Creating exe with Launch4j...
 if not exist "target\Release" mkdir "target\Release"
 "%LAUNCH4J%" "%~dp0launch4j.xml"
 if errorlevel 1 ( echo [ERROR] Launch4j failed. & goto :error )
+if not defined SIGN_PFX goto :nosign_exe
+echo Signing exe...
+"%SIGN4J%" --verbose "%SIGNTOOL%" sign /f "%SIGN_PFX%" /p "%SIGN_PASSWORD%" /fd SHA256 /tr "%TIMESTAMP_URL%" /td SHA256 "target\Release\AtbashCipherTool.exe"
+if errorlevel 1 ( echo [ERROR] Signing the exe failed. & goto :error )
+:nosign_exe
 echo.
 
 echo [4/5] Creating installer with Inno Setup...
 "%ISCC%" "%~dp0target\Atbash.iss"
 if errorlevel 1 ( echo [ERROR] Inno Setup compile failed. & goto :error )
+if not defined SIGN_PFX goto :nosign_setup
+echo Signing installer...
+"%SIGNTOOL%" sign /f "%SIGN_PFX%" /p "%SIGN_PASSWORD%" /fd SHA256 /tr "%TIMESTAMP_URL%" /td SHA256 "target\Output\%SETUPNAME%.exe"
+if errorlevel 1 ( echo [ERROR] Signing the installer failed. & goto :error )
+:nosign_setup
 echo.
 
 echo [5/5] Creating zip...
@@ -79,6 +99,7 @@ echo ==================================================
 echo  DONE!
 echo  target\Output\%SETUPNAME%.exe
 echo  target\Output\%SETUPNAME%.zip
+if not defined SIGN_PFX echo  (not code-signed: SIGN_PFX is not set)
 echo ==================================================
 goto :end
 
