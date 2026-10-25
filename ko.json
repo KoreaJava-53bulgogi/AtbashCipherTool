@@ -135,5 +135,13 @@
   "PARAM_PASSWORD": "비밀번호",
   "AES_TEXT_NO_PASSWORD": "비밀번호를 입력한 뒤 변환하세요.",
   "AES_TEXT_DECRYPT_ERROR": "복호화하지 못했습니다. 비밀번호가 틀렸거나, AES 텍스트 암호화로 만든 문자열이 아닙니다.",
-  "DECODE_ERROR": "디코딩하지 못했습니다. 입력이 이 형식으로 인코딩된 문자열인지 확인하세요."
+  "DECODE_ERROR": "디코딩하지 못했습니다. 입력이 이 형식으로 인코딩된 문자열인지 확인하세요.",
+  "HISTORY_MENU": "변환 기록...",
+  "HISTORY_TITLE": "변환 기록",
+  "HISTORY_NOTE": "최근 50개까지 보관합니다. 앱을 닫으면 모두 지워집니다.",
+  "HISTORY_EMPTY": "아직 변환 기록이 없습니다. [변환] 버튼을 누르면 여기에 기록됩니다.",
+  "HISTORY_RESTORE": "불러오기",
+  "HISTORY_COPY_OUTPUT": "결과 복사",
+  "HISTORY_CLEAR": "모두 지우기",
+  "HISTORY_CLOSE": "닫기"
 }

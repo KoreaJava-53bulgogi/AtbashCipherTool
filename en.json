@@ -135,5 +135,13 @@
   "PARAM_PASSWORD": "Password",
   "AES_TEXT_NO_PASSWORD": "Enter a password, then transform.",
   "AES_TEXT_DECRYPT_ERROR": "Could not decrypt. The password is wrong, or this is not text made by AES Text (Encrypt).",
-  "DECODE_ERROR": "Could not decode. Check that the input is encoded in this format."
+  "DECODE_ERROR": "Could not decode. Check that the input is encoded in this format.",
+  "HISTORY_MENU": "Conversion History...",
+  "HISTORY_TITLE": "Conversion History",
+  "HISTORY_NOTE": "Keeps the last 50 conversions. Everything is cleared when the app closes.",
+  "HISTORY_EMPTY": "No conversions yet. They appear here when you press [Transform].",
+  "HISTORY_RESTORE": "Restore",
+  "HISTORY_COPY_OUTPUT": "Copy Result",
+  "HISTORY_CLEAR": "Clear All",
+  "HISTORY_CLOSE": "Close"
 }

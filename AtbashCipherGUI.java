@@ -219,6 +219,14 @@ public class AtbashCipherGUI extends JFrame {
     private JMenuItem loadMenuItem;
     private JMenuItem loadFromImageMenuItem;
     private JMenuItem loadFromClipboardImageMenuItem;
+    private JMenuItem historyMenuItem;
+
+    /** 변환 기록 한 건. 앱을 닫으면 사라짐 (비밀번호/원문이 디스크에 남지 않도록) */
+    private record HistoryEntry(java.time.LocalTime time, int cipherIndex, String cipherName,
+                                int key, String input, String output) {}
+
+    private static final int HISTORY_LIMIT = 50;
+    private final java.util.Deque<HistoryEntry> history = new java.util.ArrayDeque<>();
     private JMenuItem loadFromSearchMenuItem;
     private JMenuItem loadFromImageSearchMenuItem;
     private JMenuItem encryptFileMenuItem;
@@ -623,6 +631,12 @@ public class AtbashCipherGUI extends JFrame {
         fileMenu.add(loadFromImageSearchMenuItem);
         fileMenu.add(encryptFileMenuItem);
         fileMenu.add(decryptFileMenuItem);
+        historyMenuItem = new JMenuItem();
+        historyMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(
+                java.awt.event.KeyEvent.VK_H, java.awt.event.InputEvent.CTRL_DOWN_MASK));
+        fileMenu.addSeparator();
+        fileMenu.add(historyMenuItem);
+        fileMenu.addSeparator();
         fileMenu.add(saveSettingsMenuItem);
         fileMenu.add(livePreviewMenuItem);
         fileMenu.addSeparator();
@@ -845,6 +859,7 @@ public class AtbashCipherGUI extends JFrame {
         loadMenuItem.setText(languageManager.get("LOAD_MENU"));
         loadFromImageMenuItem.setText(languageManager.get("LOAD_OCR_MENU"));
         loadFromClipboardImageMenuItem.setText(languageManager.get("LOAD_CLIPBOARD_OCR_MENU"));
+        historyMenuItem.setText(languageManager.get("HISTORY_MENU"));
         loadFromSearchMenuItem.setText(languageManager.get("LOAD_SEARCH_MENU"));
         loadFromImageSearchMenuItem.setText(languageManager.get("LOAD_IMAGE_SEARCH_MENU"));
         encryptFileMenuItem.setText(languageManager.get("ENCRYPT_FILE_MENU"));
@@ -1390,6 +1405,8 @@ public class AtbashCipherGUI extends JFrame {
             outputTextArea.setText(""); // Clear previous result
             String currentInput = inputTextArea.getText(); // 변환 시점의 텍스트를 캡처합니다.
             String keyword = currentKeyword(cipherSelector.getSelectedIndex());
+            final int historyIndex = cipherSelector.getSelectedIndex();
+            final int historyKey = (Integer) parameterSpinner.getValue();
 
             // Use a SwingWorker to perform the transformation off the EDT
             CipherAnimationWorker worker = new CipherAnimationWorker(currentInput, keyword) {
@@ -1398,6 +1415,7 @@ public class AtbashCipherGUI extends JFrame {
                     try {
                         String result = get(); // Get the result from doInBackground
                         startAnimation(result); // Start the animation on the EDT
+                        addHistory(historyIndex, historyKey, currentInput, result);
                     } catch (Exception ex) {
                         ex.printStackTrace();
                         // Handle exceptions, e.g., show an error message
@@ -1489,6 +1507,7 @@ public class AtbashCipherGUI extends JFrame {
             }
         });
         loadFromClipboardImageMenuItem.addActionListener(e -> loadTextFromClipboardImage());
+        historyMenuItem.addActionListener(e -> showHistoryDialog());
         encryptFileMenuItem.addActionListener(e -> handleFileEncryption());
         decryptFileMenuItem.addActionListener(e -> handleFileDecryption());
 
@@ -2427,6 +2446,110 @@ public class AtbashCipherGUI extends JFrame {
                     ? languageManager.get("AES_TEXT_DECRYPT_ERROR")
                     : languageManager.get("DECODE_ERROR");
         }
+    }
+
+    // ---------------------------------------------------------------------
+    // 변환 기록
+    // ---------------------------------------------------------------------
+
+    private void addHistory(int cipherIndex, int key, String input, String output) {
+        if (input == null || input.isEmpty()) return;
+        HistoryEntry last = history.peekFirst();
+        if (last != null && last.cipherIndex() == cipherIndex && last.input().equals(input)
+                && last.key() == key && !isAesTextMode(cipherIndex)) {
+            return; // 같은 변환을 연달아 누른 경우 한 번만 기록
+        }
+        String name = cipherIndex >= 0 && cipherIndex < cipherSelector.getItemCount()
+                ? cipherSelector.getItemAt(cipherIndex) : "?";
+        history.addFirst(new HistoryEntry(java.time.LocalTime.now().withNano(0), cipherIndex, name, key, input, output));
+        while (history.size() > HISTORY_LIMIT) history.removeLast();
+    }
+
+    private static String preview(String s, int max) {
+        String oneLine = s.replaceAll("\\s+", " ").trim();
+        return oneLine.length() <= max ? oneLine : oneLine.substring(0, max) + "…";
+    }
+
+    /** 변환 기록 창. 항목을 두 번 클릭하거나 [불러오기]를 누르면 그때 상태로 되돌림 */
+    private void showHistoryDialog() {
+        javax.swing.JDialog dialog = new javax.swing.JDialog(this, languageManager.get("HISTORY_TITLE"), true);
+        javax.swing.DefaultListModel<HistoryEntry> model = new javax.swing.DefaultListModel<>();
+        history.forEach(model::addElement);
+
+        JList<HistoryEntry> list = new JList<>(model);
+        list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        list.setCellRenderer(new javax.swing.DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> l, Object value, int index,
+                                                          boolean selected, boolean focus) {
+                HistoryEntry h = (HistoryEntry) value;
+                String text = "<html><b>" + h.time() + "</b> &nbsp; [" + escapeHtml(h.cipherName()) + "]<br>"
+                        + escapeHtml(preview(h.input(), 60)) + " &nbsp;→&nbsp; "
+                        + escapeHtml(preview(h.output(), 60)) + "</html>";
+                JLabel label = (JLabel) super.getListCellRendererComponent(l, text, index, selected, focus);
+                label.setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
+                return label;
+            }
+        });
+        if (!model.isEmpty()) list.setSelectedIndex(0);
+
+        Runnable restore = () -> {
+            HistoryEntry h = list.getSelectedValue();
+            if (h == null) return;
+            if (h.cipherIndex() >= 0 && h.cipherIndex() < cipherSelector.getItemCount()) {
+                cipherSelector.setSelectedIndex(h.cipherIndex());
+                if (parameterSpinner.isVisible()) parameterSpinner.setValue(h.key());
+            }
+            if (animationTimer != null && animationTimer.isRunning()) animationTimer.stop();
+            inputTextArea.setText(h.input());
+            outputTextArea.setText(h.output());
+            dialog.dispose();
+        };
+        list.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (e.getClickCount() == 2) restore.run();
+            }
+        });
+
+        JButton restoreButton = new JButton(languageManager.get("HISTORY_RESTORE"));
+        JButton copyButton = new JButton(languageManager.get("HISTORY_COPY_OUTPUT"));
+        JButton clearAllButton = new JButton(languageManager.get("HISTORY_CLEAR"));
+        JButton closeButton = new JButton(languageManager.get("HISTORY_CLOSE"));
+        restoreButton.addActionListener(e -> restore.run());
+        copyButton.addActionListener(e -> {
+            HistoryEntry h = list.getSelectedValue();
+            if (h != null) {
+                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(h.output()), null);
+            }
+        });
+        clearAllButton.addActionListener(e -> {
+            history.clear();
+            model.clear();
+        });
+        closeButton.addActionListener(e -> dialog.dispose());
+
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttons.add(clearAllButton);
+        buttons.add(copyButton);
+        buttons.add(restoreButton);
+        buttons.add(closeButton);
+
+        JLabel note = new JLabel(model.isEmpty() ? languageManager.get("HISTORY_EMPTY") : languageManager.get("HISTORY_NOTE"));
+        note.setBorder(BorderFactory.createEmptyBorder(8, 10, 4, 10));
+
+        JPanel content = new JPanel(new BorderLayout());
+        content.add(note, BorderLayout.NORTH);
+        content.add(new JScrollPane(list), BorderLayout.CENTER);
+        content.add(buttons, BorderLayout.SOUTH);
+        dialog.setContentPane(content);
+        dialog.setSize(640, 420);
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
+    }
+
+    private static String escapeHtml(String s) {
+        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 
     /** 현재 변환 방식에 맞는 키워드(비즈네르) 또는 비밀번호(AES)를 돌려줍니다. */

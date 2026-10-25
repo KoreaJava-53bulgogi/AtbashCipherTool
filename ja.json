@@ -98,5 +98,13 @@
   "PARAM_PASSWORD": "パスワード",
   "AES_TEXT_NO_PASSWORD": "パスワードを入力してから変換してください。",
   "AES_TEXT_DECRYPT_ERROR": "復号できませんでした。パスワードが違うか、AES テキスト暗号化で作成された文字列ではありません。",
-  "DECODE_ERROR": "デコードできませんでした。入力がこの形式でエンコードされた文字列か確認してください。"
+  "DECODE_ERROR": "デコードできませんでした。入力がこの形式でエンコードされた文字列か確認してください。",
+  "HISTORY_MENU": "変換履歴...",
+  "HISTORY_TITLE": "変換履歴",
+  "HISTORY_NOTE": "最新 50 件まで保存します。アプリを閉じるとすべて消去されます。",
+  "HISTORY_EMPTY": "まだ変換履歴がありません。[変換] ボタンを押すとここに記録されます。",
+  "HISTORY_RESTORE": "呼び出す",
+  "HISTORY_COPY_OUTPUT": "結果をコピー",
+  "HISTORY_CLEAR": "すべて消去",
+  "HISTORY_CLOSE": "閉じる"
 }
