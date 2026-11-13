@@ -4,6 +4,16 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <RootNamespace>Atbash.Core</RootNamespace>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Java 의 글자 규칙 표 (tools/golden/JavaCharTables.java 로 생성) -->
+    <EmbeddedResource Include="Resources\java-chars.bin" LogicalName="Atbash.Core.Resources.java-chars.bin" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Atbash.Core.Tests" />
+  </ItemGroup>
 
 </Project>

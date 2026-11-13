@@ -24,4 +24,8 @@
     <ProjectReference Include="..\..\src\Atbash.Core\Atbash.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="TestData\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

@@ -14,7 +14,7 @@ public static class Snapshot
 
         var frame = window.CaptureRenderedFrame() ?? throw new InvalidOperationException("no frame rendered");
         var path = Path.Combine(dir, name + ".png");
-        frame.Save(path);
+        using (var file = File.Create(path)) frame.Save(file, new Avalonia.Media.Imaging.PngBitmapEncoderOptions());
         return path;
     }
 }

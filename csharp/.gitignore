@@ -5,3 +5,6 @@ publish/
 *.user
 .vs/
 TestResults/
+
+# compiled Java helper classes (tools/golden)
+tools/golden/out/
