@@ -13,7 +13,7 @@ namespace Atbash.Core;
 internal static class JavaCompat
 {
     private static readonly byte[] LetterBits = new byte[8192];
-    private static readonly byte[] UpperBits = new byte[8192];
+    private static readonly byte[] UpperBits = new byte[8192]; // Java Character.isUpperCase (현재 미사용)
     private static readonly Dictionary<int, string> UpperMap = new();
 
     static JavaCompat()
@@ -36,11 +36,8 @@ internal static class JavaCompat
 
     private static int ReadInt(BinaryReader r) => BinaryPrimitives.ReverseEndianness(r.ReadInt32());
 
-    /// <summary>Java Character.isLetter(char)</summary>
+    /// <summary>Java Character.isLetter(char) (8.1.1 의 비즈네르 수정 이후로는 쓰는 곳 없음, 표 호환을 위해 남김)</summary>
     public static bool IsLetter(char c) => (LetterBits[c >> 3] & (1 << (c & 7))) != 0;
-
-    /// <summary>Java Character.isUpperCase(char)</summary>
-    public static bool IsUpperCase(char c) => (UpperBits[c >> 3] & (1 << (c & 7))) != 0;
 
     /// <summary>Java String.toUpperCase() (ß → SS 처럼 길이가 바뀌는 경우 포함)</summary>
     public static string ToUpper(string s)

@@ -110,9 +110,12 @@ public static class ScytaleCipher
 }
 
 /// <summary>
-/// 비즈네르. Java 와 똑같이 동작하도록 Java 의 글자 판별(Character.isLetter)을 그대로 씀.
-/// 주의: Java 버전에서는 한글도 "글자"로 판별돼서, 아래쪽의 한글 전용 처리에는 들어가지 않음
-/// (한글을 넣으면 복호화할 수 없는 결과가 나옴). 호환을 위해 그대로 둠.
+/// 비즈네르 (Java 8.1.1 의 VigenereCipher.java 와 같은 결과).
+///   영문자(A-Z, a-z): 키워드 글자마다 0~25칸 이동
+///   한글 음절(가-힣): 키워드 글자의 코드값만큼 11,172자 안에서 이동
+///   그 밖의 글자: 그대로 둠
+/// 8.1.0 까지는 한글·악센트 문자·일본어를 영문 규칙으로 처리하고, 키워드에 숫자·공백이 있으면
+/// 이동 값이 음수가 되어 복호화가 안 됐음. 영문 텍스트 + 영문 키워드의 결과는 예전과 같음.
 /// </summary>
 public static class VigenereCipher
 {
@@ -128,18 +131,21 @@ public static class VigenereCipher
         key = JavaCompat.ToUpper(key);
         foreach (char c in text)
         {
-            if (JavaCompat.IsLetter(c))
+            bool upper = c is >= 'A' and <= 'Z';
+            bool lower = c is >= 'a' and <= 'z';
+            if (upper || lower)
             {
-                char @base = JavaCompat.IsUpperCase(c) ? 'A' : 'a';
-                int keyShift = key[keyIndex % key.Length] - 'A';
-                if (!encrypt) keyShift = 26 - (keyShift % 26);
+                char @base = upper ? 'A' : 'a';
+                // 키워드에 영문자가 아닌 글자가 있어도 0~25 로 맞춤 (Java Math.floorMod)
+                int keyShift = ((key[keyIndex % key.Length] - 'A') % 26 + 26) % 26;
+                if (!encrypt) keyShift = (26 - keyShift) % 26;
                 sb.Append((char)(@base + (c - @base + keyShift) % 26));
                 keyIndex++;
             }
             else if (c >= '가' && c <= '힣')
             {
-                int keyShift = key[keyIndex % key.Length];
-                if (!encrypt) keyShift = 11172 - (keyShift % 11172);
+                int keyShift = key[keyIndex % key.Length] % 11172;
+                if (!encrypt) keyShift = (11172 - keyShift) % 11172;
                 sb.Append((char)('가' + (c - '가' + keyShift) % 11172));
                 keyIndex++;
             }
