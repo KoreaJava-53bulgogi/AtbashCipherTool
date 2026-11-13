@@ -133,8 +133,10 @@
   "SEARCH_NO_RESULTS": "没有搜索结果。请尝试其他关键词。",
   "NAVER_KEYS_MENU": "Naver API 密钥设置...",
   "NAVER_KEYS_SAVED": "已保存 Naver API 密钥,将从下次搜索开始使用。",
-  "NAVER_AUTH_FAILED": "Naver 拒绝了 API 密钥。Client ID 或 Client Secret 不正确,或密钥已在 Naver 开发者中心重新签发或删除。",
-  "NAVER_FORBIDDEN": "该 Naver 应用没有使用搜索 API 的权限。请在 Naver 开发者中心 → 我的应用 → API 设置中添加“搜索”。",
+  "NAVER_AUTH_FAILED": "Naver 拒绝了 API 密钥。Naver 搜索 API 已于 2026 年迁移到 NAVER Cloud Platform 的 NAVER API HUB,以前的 Naver 开发者中心密钥无法使用。需要使用 NAVER API HUB 签发的 Client ID 和 Client Secret。",
+  "NAVER_FORBIDDEN": "此密钥无法使用搜索 API。请在 NAVER Cloud Platform 控制台 → NAVER API HUB → Application 中确认已选择“网页文档搜索”和“图片搜索”。",
   "NAVER_ENTER_NEW_KEYS": "要输入新的密钥吗?",
-  "NAVER_SEARCH_FAILED": "Naver 搜索失败。请检查网络连接。"
+  "NAVER_SEARCH_FAILED": "Naver 搜索失败。请检查网络连接。",
+  "NAVER_ID_PROMPT": "请输入 NAVER API HUB 的 Client ID:\n(NAVER Cloud Platform 控制台 → NAVER API HUB → Application → 认证信息)",
+  "NAVER_SECRET_PROMPT": "请输入 NAVER API HUB 的 Client Secret:"
 }

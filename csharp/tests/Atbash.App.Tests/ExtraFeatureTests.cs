@@ -155,7 +155,7 @@ public class ExtraFeatureTests : IDisposable
     public async Task Naver_web_search_puts_chosen_results_in_the_input()
     {
         var handler = new FakeHttpHandler();
-        handler.Responses["https://openapi.naver.com/v1/search/webkr.json"] = Json("""
+        handler.Responses["https://naverapihub.apigw.ntruss.com/search/v1/webkr"] = Json("""
             {"items":[
               {"title":"<b>아트배쉬</b> 암호란?","description":"알파벳을 &quot;거꾸로&quot; 바꾸는 암호"},
               {"title":"두 번째","description":"설명 2"},
@@ -170,7 +170,9 @@ public class ExtraFeatureTests : IDisposable
 
         var request = Assert.Single(handler.Requests);
         Assert.Contains("query=%EC%95%84%ED%8A%B8%EB%B0%B0%EC%89%AC", request.RequestUri!.AbsoluteUri);
-        Assert.Equal("test-id", request.Headers.GetValues("X-Naver-Client-Id").Single());
+        Assert.Equal("test-id", request.Headers.GetValues("X-NCP-APIGW-API-KEY-ID").Single());
+        Assert.Equal("test-secret", request.Headers.GetValues("X-NCP-APIGW-API-KEY").Single());
+        Assert.StartsWith("https://naverapihub.apigw.ntruss.com/search/v1/webkr?display=5&format=json&query=", request.RequestUri!.AbsoluteUri);
         Assert.Equal("아트배쉬 암호란?\n알파벳을 \"거꾸로\" 바꾸는 암호\n\n세 번째 \"따옴표\"\n설명 3", vm.InputText);
     }
 
@@ -179,7 +181,7 @@ public class ExtraFeatureTests : IDisposable
     {
         var image = TextImageExporter.RenderPng("NAVER IMAGE 42", Colors.White, Colors.Black, 36);
         var handler = new FakeHttpHandler();
-        handler.Responses["https://openapi.naver.com/v1/search/image.json"] = Json("""
+        handler.Responses["https://naverapihub.apigw.ntruss.com/search/v1/image"] = Json("""
             {"items":[{"title":"이미지 1","link":"https://img.example/full.png","thumbnail":"https://img.example/thumb.png"}]}
             """);
         handler.Responses["https://img.example/"] = ("image/png", image);
@@ -197,7 +199,7 @@ public class ExtraFeatureTests : IDisposable
     public async Task Naver_keys_are_asked_and_saved_when_not_bundled()
     {
         var handler = new FakeHttpHandler();
-        handler.Responses["https://openapi.naver.com/"] = Json("""{"items":[]}""");
+        handler.Responses["https://naverapihub.apigw.ntruss.com/"] = Json("""{"items":[]}""");
         var vm = NewVm();
         vm.BundledNaverKeys = () => null;
         vm.Http = new HttpClient(handler);
@@ -206,7 +208,7 @@ public class ExtraFeatureTests : IDisposable
         _dialogs.TextResults.Enqueue("my-secret");
         await vm.SearchWebCommand.ExecuteAsync(null);
 
-        Assert.Equal("my-id", handler.Requests.Single().Headers.GetValues("X-Naver-Client-Id").Single());
+        Assert.Equal("my-id", handler.Requests.Single().Headers.GetValues("X-NCP-APIGW-API-KEY-ID").Single());
         Assert.Equal("검색 결과가 없습니다. 다른 키워드로 검색해보세요.", _dialogs.Messages.Single().Message);
         var saved = new SettingsStore(SettingsPath).Load();
         Assert.Equal("my-id", saved.NaverClientId);
@@ -219,14 +221,14 @@ public class ExtraFeatureTests : IDisposable
         var handler = new FakeHttpHandler
         {
             // 앱에 들어 있는 키(test-id)는 거부, 새 키(new-id)는 성공
-            Custom = r => r.Headers.GetValues("X-Naver-Client-Id").Single() == "test-id"
+            Custom = r => r.Headers.GetValues("X-NCP-APIGW-API-KEY-ID").Single() == "test-id"
                 ? new HttpResponseMessage(System.Net.HttpStatusCode.Unauthorized)
                 {
                     Content = new StringContent("""{"errorMessage":"NID AUTH Result Invalid (28) : Authentication failed.","errorCode":"024"}"""),
                 }
                 : null,
         };
-        handler.Responses["https://openapi.naver.com/v1/search/webkr.json"] = Json("""{"items":[{"title":"결과","description":"설명"}]}""");
+        handler.Responses["https://naverapihub.apigw.ntruss.com/search/v1/webkr"] = Json("""{"items":[{"title":"결과","description":"설명"}]}""");
         var vm = NewVm();
         vm.Http = new HttpClient(handler);
         _dialogs.TextResults.Enqueue("검색어");
@@ -246,7 +248,27 @@ public class ExtraFeatureTests : IDisposable
         _dialogs.TextResults.Enqueue("두 번째");
         _dialogs.ChooseResults.Enqueue(new[] { 0 });
         await vm.SearchWebCommand.ExecuteAsync(null);
-        Assert.Equal("new-id", handler.Requests.Last().Headers.GetValues("X-Naver-Client-Id").Single());
+        Assert.Equal("new-id", handler.Requests.Last().Headers.GetValues("X-NCP-APIGW-API-KEY-ID").Single());
+    }
+
+    [AvaloniaFact]
+    public async Task Gateway_error_format_is_shown()
+    {
+        // 네이버 클라우드 게이트웨이의 오류 모양 {"error":{...}}
+        var handler = new FakeHttpHandler
+        {
+            Custom = _ => new HttpResponseMessage(System.Net.HttpStatusCode.Unauthorized)
+            {
+                Content = new StringContent("""{"error":{"errorCode":"200","message":"Authentication Failed","details":"Invalid authentication information."}}"""),
+            },
+        };
+        var vm = NewVm();
+        vm.Http = new HttpClient(handler);
+        _dialogs.TextResults.Enqueue("검색어");
+        await vm.SearchWebCommand.ExecuteAsync(null);
+        var confirm = _dialogs.Confirms.Single();
+        Assert.Contains("NAVER API HUB", confirm);
+        Assert.Contains("200 / Authentication Failed / Invalid authentication information.", confirm);
     }
 
     [AvaloniaFact]
@@ -257,7 +279,7 @@ public class ExtraFeatureTests : IDisposable
         vm.Http = new HttpClient(handler);
         _dialogs.TextResults.Enqueue("검색어");
         await vm.SearchWebCommand.ExecuteAsync(null); // 새 키 입력은 "아니요"
-        Assert.Contains("검색 API 를 쓸 권한이 없습니다", _dialogs.Confirms.Single());
+        Assert.Contains("이미지 검색", _dialogs.Confirms.Single()); // 어떤 API 를 골라야 하는지 안내
 
         handler.Custom = _ => throw new HttpRequestException("network down");
         _dialogs.TextResults.Enqueue("검색어");

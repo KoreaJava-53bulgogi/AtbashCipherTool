@@ -22,11 +22,18 @@ public sealed class NaverAuthException : Exception
 }
 
 /// <summary>
-/// 네이버 검색 API (웹 문서 / 이미지). Java 버전과 같은 주소와 결과 5개.
+/// 네이버 검색 API (웹 문서 / 이미지), 결과 5개.
+/// 2026년에 네이버 개발자 센터(openapi.naver.com)에서 네이버 클라우드 플랫폼의
+/// NAVER API HUB 로 옮겨져서 주소와 키 헤더가 바뀌었음 (결과 형식은 같음).
+///   https://api.ncloud-docs.com/docs/naver-api-hub-search-webkr
+///   https://api.ncloud-docs.com/docs/naver-api-hub-search-image
+/// 키(Client ID / Secret)는 네이버 클라우드 플랫폼 콘솔 → NAVER API HUB 에서 발급.
 /// 결과는 정규식이 아니라 JSON 으로 제대로 읽어서, 따옴표·특수문자가 깨지지 않음.
 /// </summary>
 public sealed class NaverSearch
 {
+    public const string BaseUrl = "https://naverapihub.apigw.ntruss.com/search/v1/";
+
     private readonly HttpClient _http;
     private readonly string _clientId;
     private readonly string _clientSecret;
@@ -66,15 +73,15 @@ public sealed class NaverSearch
 
     private async Task<JsonDocument> GetAsync(string kind, string keyword)
     {
-        var url = $"https://openapi.naver.com/v1/search/{kind}.json?display=5&query={Uri.EscapeDataString(keyword)}";
+        var url = $"{BaseUrl}{kind}?display=5&format=json&query={Uri.EscapeDataString(keyword)}";
         using var request = new HttpRequestMessage(HttpMethod.Get, url);
-        request.Headers.Add("X-Naver-Client-Id", _clientId);
-        request.Headers.Add("X-Naver-Client-Secret", _clientSecret);
+        request.Headers.Add("X-NCP-APIGW-API-KEY-ID", _clientId);
+        request.Headers.Add("X-NCP-APIGW-API-KEY", _clientSecret);
         using var response = await _http.SendAsync(request);
         if (!response.IsSuccessStatusCode)
         {
             var detail = ErrorMessage(await response.Content.ReadAsStringAsync());
-            // 401: 키가 틀렸거나 지워짐, 403: 그 애플리케이션에 검색 API 를 추가하지 않음
+            // 401: 키가 틀렸거나 지워짐 (예전 개발자 센터 키 포함), 403: 그 애플리케이션에 이 검색 API 를 고르지 않음
             if (response.StatusCode is System.Net.HttpStatusCode.Unauthorized or System.Net.HttpStatusCode.Forbidden)
                 throw new NaverAuthException((int)response.StatusCode, detail);
             throw new HttpRequestException($"HTTP {(int)response.StatusCode}{(detail.Length > 0 ? ": " + detail : "")}");
@@ -82,13 +89,26 @@ public sealed class NaverSearch
         return JsonDocument.Parse(await response.Content.ReadAsStreamAsync());
     }
 
-    /// <summary>네이버 오류 응답의 errorMessage (없으면 빈 문자열)</summary>
+    /// <summary>
+    /// 오류 응답의 설명 (없으면 빈 문자열). 검색 오류는 {"errorCode","errorMessage"},
+    /// 네이버 클라우드 게이트웨이 오류(키 문제 등)는 {"error":{"errorCode","message","details"}} 모양
+    /// </summary>
     private static string ErrorMessage(string body)
     {
         try
         {
             using var doc = JsonDocument.Parse(body);
-            return doc.RootElement.TryGetProperty("errorMessage", out var m) ? m.GetString() ?? "" : "";
+            var root = doc.RootElement;
+            if (root.ValueKind != JsonValueKind.Object) return "";
+            if (root.TryGetProperty("errorMessage", out var m) && m.ValueKind == JsonValueKind.String) return m.GetString() ?? "";
+            if (root.TryGetProperty("error", out var e) && e.ValueKind == JsonValueKind.Object)
+            {
+                var parts = new[] { "errorCode", "message", "details" }
+                    .Select(k => e.TryGetProperty(k, out var v) ? v.ToString() : "")
+                    .Where(s => s.Length > 0);
+                return string.Join(" / ", parts);
+            }
+            return "";
         }
         catch (JsonException)
         {

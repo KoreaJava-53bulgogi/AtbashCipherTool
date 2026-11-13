@@ -69,8 +69,8 @@
   "SEARCH_DIALOG_TITLE": "Naver Search",
   "SEARCH_KEYWORD_PROMPT": "Enter search keyword:",
   "NAVER_API_CONFIG_TITLE": "Naver API Config",
-  "NAVER_ID_PROMPT": "Enter Naver Client ID:",
-  "NAVER_SECRET_PROMPT": "Enter Naver Client Secret:",
+  "NAVER_ID_PROMPT": "Enter the NAVER API HUB Client ID:\n(NAVER Cloud Platform console > NAVER API HUB > Application > Credentials)",
+  "NAVER_SECRET_PROMPT": "Enter the NAVER API HUB Client Secret:",
   "SEARCH_ERROR_TITLE": "Search Error",
   "SEARCH_SELECT_PROMPT": "Select search results to load (Multiple selection allowed):",
   "SAVE_ERROR_MESSAGE": "Error saving file: ",
@@ -170,8 +170,8 @@
   "SEARCH_NO_RESULTS": "No results found. Try a different keyword.",
   "NAVER_KEYS_MENU": "Naver API Keys...",
   "NAVER_KEYS_SAVED": "The Naver API keys were saved and will be used from the next search.",
-  "NAVER_AUTH_FAILED": "Naver rejected the API keys. The Client ID or Client Secret is wrong, or the keys were reissued or deleted in the Naver Developers console.",
-  "NAVER_FORBIDDEN": "This Naver application is not allowed to use the Search API. Add 'Search' under Naver Developers > My Applications > API settings.",
+  "NAVER_AUTH_FAILED": "Naver rejected the API keys. In 2026 the Naver Search API moved to NAVER API HUB on NAVER Cloud Platform, and old Naver Developers keys no longer work. You need a Client ID and Client Secret issued by NAVER API HUB.",
+  "NAVER_FORBIDDEN": "These keys cannot use the Search API. In the NAVER Cloud Platform console, open NAVER API HUB > Application and make sure 'Web document search' and 'Image search' are selected.",
   "NAVER_ENTER_NEW_KEYS": "Enter new keys?",
   "NAVER_SEARCH_FAILED": "Naver search failed. Please check your internet connection."
 }

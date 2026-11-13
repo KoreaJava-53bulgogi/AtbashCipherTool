@@ -133,8 +133,10 @@
   "SEARCH_NO_RESULTS": "検索結果がありません。別のキーワードで検索してください。",
   "NAVER_KEYS_MENU": "Naver API キー設定...",
   "NAVER_KEYS_SAVED": "Naver API キーを保存しました。次の検索から使用します。",
-  "NAVER_AUTH_FAILED": "Naver が API キーを拒否しました。Client ID または Client Secret が間違っているか、Naver Developers でキーが再発行・削除されています。",
-  "NAVER_FORBIDDEN": "この Naver アプリケーションには検索 API の権限がありません。Naver Developers → マイアプリケーション → API 設定で「検索」を追加してください。",
+  "NAVER_AUTH_FAILED": "Naver が API キーを拒否しました。Naver 検索 API は 2026年に NAVER Cloud Platform の NAVER API HUB に移行したため、以前の Naver Developers のキーは使えません。NAVER API HUB で発行した Client ID と Client Secret が必要です。",
+  "NAVER_FORBIDDEN": "このキーでは検索 API を使えません。NAVER Cloud Platform コンソール → NAVER API HUB → Application で「ウェブ文書検索」と「画像検索」を選択しているか確認してください。",
   "NAVER_ENTER_NEW_KEYS": "新しいキーを入力しますか?",
-  "NAVER_SEARCH_FAILED": "Naver 検索に失敗しました。インターネット接続を確認してください。"
+  "NAVER_SEARCH_FAILED": "Naver 検索に失敗しました。インターネット接続を確認してください。",
+  "NAVER_ID_PROMPT": "NAVER API HUB の Client ID を入力してください:\n(NAVER Cloud Platform コンソール → NAVER API HUB → Application → 認証情報)",
+  "NAVER_SECRET_PROMPT": "NAVER API HUB の Client Secret を入力してください:"
 }
