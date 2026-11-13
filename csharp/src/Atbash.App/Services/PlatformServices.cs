@@ -49,6 +49,21 @@ public interface IDialogs
 
     /// <summary>브라우저로 주소 열기</summary>
     Task OpenUrlAsync(string url);
+
+    /// <summary>버튼 여러 개 중 하나 고르기. 누른 버튼 번호 (그냥 닫으면 마지막 버튼)</summary>
+    Task<int> ShowOptionsAsync(string title, string message, MessageKind kind, params string[] buttons);
+
+    /// <summary>진행률 창 (닫을 때까지 떠 있음). [취소]를 누르면 onCancel</summary>
+    IProgressWindow OpenProgress(string title, string message, string cancelText, Action onCancel);
+}
+
+/// <summary>진행률 창</summary>
+public interface IProgressWindow
+{
+    /// <summary>total 이 0 이하이면 전체 크기를 모름</summary>
+    void Update(long done, long total);
+
+    void Close();
 }
 
 /// <summary>목록의 한 항목</summary>

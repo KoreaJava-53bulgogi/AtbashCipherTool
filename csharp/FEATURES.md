@@ -71,15 +71,19 @@ QR 은 만든 이미지를 다시 해독해서 원문(한글·이모지)과 같�
 - [x] 시작 스플래시 (startup.png + 진행 막대)
 - [x] 앱 아이콘
 
-## 5단계: 설정·업데이트
+## 5단계: 설정·업데이트 ✅
 
-- [ ] Java 설정 가져오기 (레지스트리 HKCU\Software\JavaSoft\Prefs\<unnamed>):
+Java 가 레지스트리에 실제로 저장한 이름·값(한글·이모지·대문자·슬래시 포함)을 그대로 되돌리는지 확인 (TestData/java-prefs-registry.json).
+업데이트는 시험용 version.json(file: 주소)으로 자동 설치·지문 검사·하루 한 번·건너뛰기·오프라인까지 확인.
+설정 옮기기는 C# 설정 파일이 없을 때 처음 한 번만 함.
+
+- [x] Java 설정 가져오기 (레지스트리 HKCU\Software\JavaSoft\Prefs\<unnamed>):
       theme, language, cipherMode, caesarShift, scytaleDiameter, hangulShift, livePreview,
       saveSettingsEnabled, windowWidth/Height, custom.themes.list, custom.theme.*,
       naverClientId/Secret, skippedVersion, lastUpdateCheck
-- [ ] 업데이트 알림 (하루 한 번, 수동 확인, 이 버전 건너뛰기)
-- [ ] 자동 업데이트 (내려받기, SHA-256 확인, /SILENT 설치, 앱 종료, 재실행)
-- [ ] 테스트용 업데이트 주소 (ATBASH_UPDATE_URL)
+- [x] 업데이트 알림 (하루 한 번, 수동 확인, 이 버전 건너뛰기)
+- [x] 자동 업데이트 (내려받기, SHA-256 확인, /SILENT 설치, 앱 종료, 재실행)
+- [x] 테스트용 업데이트 주소 (ATBASH_UPDATE_URL)
 
 ## 6단계: 배포
 

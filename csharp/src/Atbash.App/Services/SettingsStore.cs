@@ -7,7 +7,7 @@ namespace Atbash.App.Services;
 
 /// <summary>
 /// 저장되는 설정. 이름과 기본값은 Java 버전과 같음.
-/// (Java 버전 설정을 옮겨오는 기능은 5단계에서 추가)
+/// 처음 실행할 때 Java 버전 설정이 있으면 JavaSettingsImporter 가 옮겨 옴.
 /// </summary>
 public sealed class AppSettings
 {
@@ -28,6 +28,15 @@ public sealed class AppSettings
     /// <summary>사용자가 직접 입력한 네이버 API 키 (앱에 키가 들어 있지 않을 때만 사용)</summary>
     public string? NaverClientId { get; set; }
     public string? NaverClientSecret { get; set; }
+
+    /// <summary>"이 버전 건너뛰기" 를 고른 버전</summary>
+    public string? SkippedVersion { get; set; }
+
+    /// <summary>마지막으로 자동 업데이트 확인을 한 시각 (1970-01-01 부터의 밀리초, Java 와 같음)</summary>
+    public long LastUpdateCheck { get; set; }
+
+    /// <summary>Java 버전 설정을 옮겨 왔는지 (기록용)</summary>
+    public bool MigratedFromJava { get; set; }
 }
 
 /// <summary>설정을 JSON 파일로 읽고 씀. 기본 위치: %APPDATA%\AtbashCipherTool\settings.json</summary>

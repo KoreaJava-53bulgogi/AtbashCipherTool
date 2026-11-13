@@ -86,6 +86,38 @@ public sealed class FakeDialogs : IDialogs
         OpenedUrls.Add(url);
         return Task.CompletedTask;
     }
+
+    // ---- 5단계 -------------------------------------------------------------------
+
+    public Queue<int> OptionResults { get; } = new();
+    public List<(string Message, string[] Buttons)> Options { get; } = new();
+    public List<FakeProgress> Progresses { get; } = new();
+
+    public Task<int> ShowOptionsAsync(string title, string message, MessageKind kind, params string[] buttons)
+    {
+        Options.Add((message, buttons));
+        return Task.FromResult(OptionResults.Count > 0 ? OptionResults.Dequeue() : buttons.Length - 1);
+    }
+
+    public IProgressWindow OpenProgress(string title, string message, string cancelText, Action onCancel)
+    {
+        var p = new FakeProgress(onCancel);
+        Progresses.Add(p);
+        return p;
+    }
+}
+
+public sealed class FakeProgress : IProgressWindow
+{
+    public FakeProgress(Action cancel) => Cancel = cancel;
+
+    public Action Cancel { get; }
+    public List<(long Done, long Total)> Updates { get; } = new();
+    public bool Closed { get; private set; }
+
+    public void Update(long done, long total) => Updates.Add((done, total));
+
+    public void Close() => Closed = true;
 }
 
 /// <summary>네이버 API 대신 미리 정한 응답을 돌려주는 가짜 HTTP. 받은 요청을 기록함</summary>

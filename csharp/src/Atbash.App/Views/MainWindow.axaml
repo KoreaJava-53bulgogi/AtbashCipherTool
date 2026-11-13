@@ -23,7 +23,7 @@
     </Window.KeyBindings>
 
     <DockPanel>
-        <!-- 메뉴 (순서는 Java 버전과 같음. 업데이트 확인은 5단계에서 추가) -->
+        <!-- 메뉴 (순서는 Java 버전과 같음) -->
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="{Binding L[FILE_MENU]}">
                 <MenuItem Header="{Binding L[LOAD_MENU]}" Command="{Binding LoadCommand}" />
@@ -88,6 +88,7 @@
                           Command="{Binding SetLanguageCommand}" CommandParameter="{x:Static svc:AppLanguage.Japanese}" />
             </MenuItem>
             <MenuItem Header="{Binding L[HELP_MENU]}">
+                <MenuItem Header="{Binding L[CHECK_UPDATE_MENU]}" Command="{Binding CheckForUpdatesCommand}" />
                 <MenuItem Header="{Binding L[ABOUT_MENU]}" Command="{Binding ShowAboutCommand}" />
             </MenuItem>
         </Menu>
