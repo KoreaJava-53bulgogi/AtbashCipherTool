@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 
@@ -20,6 +21,13 @@ public sealed class AppSettings
     public bool SaveSettingsEnabled { get; set; } = true;
     public int WindowWidth { get; set; } = 1100;
     public int WindowHeight { get; set; } = 500;
+
+    /// <summary>사용자 테마들 (Theme 에 이름이 들어 있으면 그 테마를 씀)</summary>
+    public List<CustomThemeData> CustomThemes { get; set; } = new();
+
+    /// <summary>사용자가 직접 입력한 네이버 API 키 (앱에 키가 들어 있지 않을 때만 사용)</summary>
+    public string? NaverClientId { get; set; }
+    public string? NaverClientSecret { get; set; }
 }
 
 /// <summary>설정을 JSON 파일로 읽고 씀. 기본 위치: %APPDATA%\AtbashCipherTool\settings.json</summary>

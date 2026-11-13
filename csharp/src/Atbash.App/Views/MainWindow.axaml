@@ -19,19 +19,23 @@
 
     <Window.KeyBindings>
         <KeyBinding Gesture="Ctrl+Shift+V" Command="{Binding OcrFromClipboardCommand}" />
+        <KeyBinding Gesture="Ctrl+H" Command="{Binding ShowHistoryCommand}" />
     </Window.KeyBindings>
 
     <DockPanel>
-        <!-- 메뉴 (3~5단계에서 파일·도움말 항목이 더 늘어남) -->
+        <!-- 메뉴 (순서는 Java 버전과 같음. 업데이트 확인은 5단계에서 추가) -->
         <Menu DockPanel.Dock="Top">
-            <!-- 순서는 Java 버전과 같음 (네이버 검색·변환 기록·QR 은 4단계에서 추가) -->
             <MenuItem Header="{Binding L[FILE_MENU]}">
                 <MenuItem Header="{Binding L[LOAD_MENU]}" Command="{Binding LoadCommand}" />
                 <MenuItem Header="{Binding L[LOAD_OCR_MENU]}" Command="{Binding OcrFromFileCommand}" />
                 <MenuItem Header="{Binding L[LOAD_CLIPBOARD_OCR_MENU]}" Command="{Binding OcrFromClipboardCommand}"
                           InputGesture="Ctrl+Shift+V" />
+                <MenuItem Header="{Binding L[LOAD_SEARCH_MENU]}" Command="{Binding SearchWebCommand}" />
+                <MenuItem Header="{Binding L[LOAD_IMAGE_SEARCH_MENU]}" Command="{Binding SearchImagesCommand}" />
                 <MenuItem Header="{Binding L[ENCRYPT_FILE_MENU]}" Command="{Binding EncryptFilesCommand}" />
                 <MenuItem Header="{Binding L[DECRYPT_FILE_MENU]}" Command="{Binding DecryptFilesCommand}" />
+                <Separator />
+                <MenuItem Header="{Binding L[HISTORY_MENU]}" Command="{Binding ShowHistoryCommand}" InputGesture="Ctrl+H" />
                 <Separator />
                 <MenuItem Header="{Binding L[SAVE_SETTINGS_MENU]}" ToggleType="CheckBox"
                           IsChecked="{Binding SaveSettings}" />
@@ -40,6 +44,7 @@
                 <Separator />
                 <MenuItem Header="{Binding L[SAVE_MENU]}" Command="{Binding SaveCommand}" />
                 <MenuItem Header="{Binding L[SAVE_IMAGE_MENU]}" Command="{Binding SaveImageCommand}" />
+                <MenuItem Header="{Binding L[SAVE_QR_MENU]}" Command="{Binding SaveQrCommand}" />
             </MenuItem>
             <MenuItem Header="{Binding L[THEME_MENU]}">
                 <MenuItem Header="{Binding L[LIGHT_MODE_MENU]}" ToggleType="Radio" GroupName="theme"
@@ -48,6 +53,25 @@
                 <MenuItem Header="{Binding L[DARK_MODE_MENU]}" ToggleType="Radio" GroupName="theme"
                           IsChecked="{Binding IsDarkTheme, Mode=OneWay}"
                           Command="{Binding SetThemeCommand}" CommandParameter="DARK" />
+                <Separator />
+                <!-- 사용자 테마 목록 -->
+                <MenuItem Header="{Binding L[CUSTOM_THEMES_MENU]}" ItemsSource="{Binding CustomThemeItems}">
+                    <MenuItem.Styles>
+                        <Style Selector="MenuItem" x:DataType="vm:CustomThemeItem">
+                            <Setter Property="Header" Value="{Binding Name}" />
+                            <Setter Property="ToggleType" Value="Radio" />
+                            <Setter Property="IsChecked" Value="{Binding IsSelected, Mode=OneWay}" />
+                            <Setter Property="Command" Value="{Binding Select}" />
+                            <Setter Property="CommandParameter" Value="{Binding Name}" />
+                        </Style>
+                    </MenuItem.Styles>
+                </MenuItem>
+                <Separator />
+                <MenuItem Header="{Binding L[SAVE_AS_NEW_THEME_MENU]}" Command="{Binding SaveAsNewThemeCommand}" />
+                <MenuItem Header="{Binding L[DELETE_THEME_MENU]}" Command="{Binding DeleteThemeCommand}" />
+                <Separator />
+                <MenuItem Header="{Binding L[EXPORT_THEME_MENU]}" Command="{Binding ExportThemeCommand}" />
+                <MenuItem Header="{Binding L[IMPORT_THEME_MENU]}" Command="{Binding ImportThemeCommand}" />
             </MenuItem>
             <MenuItem Header="{Binding L[LANGUAGE_MENU]}">
                 <MenuItem Header="{Binding L[KOREAN_MENU]}" ToggleType="Radio" GroupName="lang"
@@ -62,6 +86,9 @@
                 <MenuItem Header="{Binding L[JAPANESE_MENU]}" ToggleType="Radio" GroupName="lang"
                           IsChecked="{Binding IsJapanese, Mode=OneWay}"
                           Command="{Binding SetLanguageCommand}" CommandParameter="{x:Static svc:AppLanguage.Japanese}" />
+            </MenuItem>
+            <MenuItem Header="{Binding L[HELP_MENU]}">
+                <MenuItem Header="{Binding L[ABOUT_MENU]}" Command="{Binding ShowAboutCommand}" />
             </MenuItem>
         </Menu>
 

@@ -129,5 +129,6 @@
   "FILE_FILTER_IMAGES": "画像ファイル",
   "FILE_FILTER_ENCRYPTED": "暗号化ファイル (*.enc)",
   "FILE_FILTER_PNG": "PNG 画像 (*.png)",
-  "FILE_FILTER_ALL": "すべてのファイル"
+  "FILE_FILTER_ALL": "すべてのファイル",
+  "SEARCH_NO_RESULTS": "検索結果がありません。別のキーワードで検索してください。"
 }

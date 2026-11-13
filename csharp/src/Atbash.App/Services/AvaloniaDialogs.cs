@@ -14,7 +14,7 @@ using Avalonia.Platform.Storage;
 namespace Atbash.App.Services;
 
 /// <summary>실제 앱에서 쓰는 창들 (Avalonia 에는 기본 메시지 창이 없어서 직접 만듦)</summary>
-public sealed class AvaloniaDialogs : IDialogs
+public sealed partial class AvaloniaDialogs : IDialogs
 {
     private readonly Window _owner;
     private readonly Func<Localizer> _l;
@@ -172,7 +172,7 @@ public sealed class AvaloniaDialogs : IDialogs
         return result;
     }
 
-    private Window NewWindow(string title) => new()
+    internal Window NewWindow(string title) => new()
     {
         Title = title,
         SizeToContent = SizeToContent.WidthAndHeight,

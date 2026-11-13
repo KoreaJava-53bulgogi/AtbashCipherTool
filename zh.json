@@ -129,5 +129,6 @@
   "FILE_FILTER_IMAGES": "图片文件",
   "FILE_FILTER_ENCRYPTED": "加密文件 (*.enc)",
   "FILE_FILTER_PNG": "PNG 图片 (*.png)",
-  "FILE_FILTER_ALL": "所有文件"
+  "FILE_FILTER_ALL": "所有文件",
+  "SEARCH_NO_RESULTS": "没有搜索结果。请尝试其他关键词。"
 }

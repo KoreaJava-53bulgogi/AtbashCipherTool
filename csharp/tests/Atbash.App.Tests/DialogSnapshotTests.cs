@@ -45,6 +45,53 @@ public class DialogSnapshotTests
     }
 
     [AvaloniaFact]
+    public void Stage4_windows_render()
+    {
+        var (owner, dialogs) = Setup();
+
+        // 변환 기록
+        var entries = new List<HistoryEntry>
+        {
+            new(DateTime.Now, 18, "한글 자모 암호 (암호화)", 3, "안녕 Hello", "첃뢐 Hello"),
+            new(DateTime.Now.AddMinutes(-1), 11, "Base64 (인코딩)", 0, "Hello World 이것은 꽤 긴 문장입니다. 미리보기에서 잘려야 합니다 ...", "SGVsbG8gV29ybGQ="),
+        };
+        _ = dialogs.ShowHistoryAsync(entries, _ => Task.CompletedTask, () => { });
+        Dispatcher.UIThread.RunJobs();
+        var w = OpenedDialog(owner);
+        Snapshot.Save(w, "stage4-history");
+        w.Close();
+        Dispatcher.UIThread.RunJobs();
+
+        // 테마 색 고르기
+        _ = dialogs.EditThemeColorsAsync("테마 사용자 정의", ThemeColors.FromTheme(AppTheme.Light));
+        Dispatcher.UIThread.RunJobs();
+        w = OpenedDialog(owner);
+        Snapshot.Save(w, "stage4-theme-editor");
+        w.Close();
+        Dispatcher.UIThread.RunJobs();
+
+        // QR 미리보기
+        _ = dialogs.ShowImageAsync("QR 코드로 저장...", QrCodeService.CreatePng("안녕하세요"), "PNG로 저장", "닫기");
+        Dispatcher.UIThread.RunJobs();
+        w = OpenedDialog(owner);
+        Snapshot.Save(w, "stage4-qr");
+        w.Close();
+        Dispatcher.UIThread.RunJobs();
+
+        // 검색 결과 고르기
+        _ = dialogs.ChooseAsync("네이버 검색", "불러올 검색 결과를 선택하세요 (복수 선택 가능):", new List<ChoiceItem>
+        {
+            new("아트배쉬 암호란?", "알파벳을 거꾸로 바꾸는 고대 히브리 암호입니다."),
+            new("카이사르 암호", "글자를 일정한 칸만큼 밀어서 바꾸는 암호."),
+        }, multiple: true);
+        Dispatcher.UIThread.RunJobs();
+        w = OpenedDialog(owner);
+        Snapshot.Save(w, "stage4-choose");
+        w.Close();
+        Dispatcher.UIThread.RunJobs();
+    }
+
+    [AvaloniaFact]
     public void Confirm_dialog_uses_localized_buttons()
     {
         var (owner, dialogs) = Setup();

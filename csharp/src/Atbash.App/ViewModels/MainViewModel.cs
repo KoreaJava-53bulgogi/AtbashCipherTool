@@ -64,8 +64,9 @@ public partial class MainViewModel : ViewModelBase
         LivePreview = _settings.LivePreview;
         L = Localizer.Load(Localizer.Parse(_settings.Language));
         RebuildModeNames();
-        Theme = AppTheme.FromSaved(_settings.Theme);
+        Theme = ResolveTheme(_settings.Theme);
         if (_app != null) ThemeService.Apply(_app, Theme);
+        RebuildCustomThemeItems();
 
         int mode = _settings.CipherMode;
         SelectedModeIndex = mode >= 0 && mode < ModeKeys.Length ? mode : 0;
@@ -154,7 +155,9 @@ public partial class MainViewModel : ViewModelBase
         {
             // AES 는 키를 만드는 데 시간이 걸리므로 화면이 멈추지 않게 따로 실행
             var result = await Task.Run(() => CipherEngine.Transform(mode, input, key, keyword));
-            AnimateOutput(Describe(result));
+            var text = Describe(result);
+            AnimateOutput(text);
+            AddHistory((int)mode, key, input, text);
         }
         finally
         {
@@ -191,12 +194,7 @@ public partial class MainViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void SetTheme(string name)
-    {
-        Theme = AppTheme.FromSaved(name);
-        if (_app != null) ThemeService.Apply(_app, Theme);
-        Persist(s => s.Theme = Theme.Name);
-    }
+    private void SetTheme(string name) => ApplyAndRemember(AppTheme.FromSaved(name));
 
     /// <summary>창을 닫을 때 크기 저장 (설정 저장이 켜져 있을 때만, Java 와 같음)</summary>
     public void SaveWindowSize(double width, double height) =>
@@ -224,6 +222,8 @@ public partial class MainViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(IsLightTheme));
         OnPropertyChanged(nameof(IsDarkTheme));
+        OnPropertyChanged(nameof(IsCustomTheme));
+        RebuildCustomThemeItems();
     }
 
     partial void OnSelectedModeIndexChanged(int value)

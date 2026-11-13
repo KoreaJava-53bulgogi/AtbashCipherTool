@@ -166,5 +166,6 @@
   "FILE_FILTER_IMAGES": "Image Files",
   "FILE_FILTER_ENCRYPTED": "Encrypted Files (*.enc)",
   "FILE_FILTER_PNG": "PNG Images (*.png)",
-  "FILE_FILTER_ALL": "All Files"
+  "FILE_FILTER_ALL": "All Files",
+  "SEARCH_NO_RESULTS": "No results found. Try a different keyword."
 }

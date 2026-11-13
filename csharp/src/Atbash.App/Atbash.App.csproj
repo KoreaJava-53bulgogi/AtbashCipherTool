@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="12.1.6" />
+    <PackageReference Include="Avalonia.Controls.ColorPicker" Version="12.1.6" />
     <PackageReference Include="Avalonia.Desktop" Version="12.1.6" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.6" />
     <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.6" />
@@ -27,6 +28,7 @@
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="QRCoder" Version="1.8.1" />
     <PackageReference Include="Tesseract" Version="5.2.0" />
   </ItemGroup>
 
@@ -37,6 +39,16 @@
     <EmbeddedResource Include="..\..\..\en.json" LogicalName="Atbash.App.Lang.en.json" Link="Lang\en.json" />
     <EmbeddedResource Include="..\..\..\ja.json" LogicalName="Atbash.App.Lang.ja.json" Link="Lang\ja.json" />
     <EmbeddedResource Include="..\..\..\zh.json" LogicalName="Atbash.App.Lang.zh.json" Link="Lang\zh.json" />
+    <!-- 도움말 → 정보 에 보여주는 README (Java 버전과 같은 파일) -->
+    <EmbeddedResource Include="..\..\..\README.txt" LogicalName="Atbash.App.README.txt" Link="README.txt" />
+    <!-- 네이버 API 키: 로컬에만 있는 파일 (git 에 없음). 없으면 사용자가 입력 -->
+    <EmbeddedResource Include="..\..\..\naver.properties" LogicalName="Atbash.App.naver.properties" Link="naver.properties"
+                      Condition="Exists('..\..\..\naver.properties')" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 시작 스플래시 이미지 (Java 버전과 같은 파일) -->
+    <AvaloniaResource Include="..\..\..\startup.png" Link="Assets\startup.png" />
   </ItemGroup>
 
   <ItemGroup>

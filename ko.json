@@ -166,5 +166,6 @@
   "FILE_FILTER_IMAGES": "이미지 파일",
   "FILE_FILTER_ENCRYPTED": "암호화된 파일 (*.enc)",
   "FILE_FILTER_PNG": "PNG 이미지 (*.png)",
-  "FILE_FILTER_ALL": "모든 파일"
+  "FILE_FILTER_ALL": "모든 파일",
+  "SEARCH_NO_RESULTS": "검색 결과가 없습니다. 다른 키워드로 검색해보세요."
 }

@@ -16,6 +16,8 @@
 
     <Application.Styles>
         <FluentTheme />
+        <!-- 사용자 테마 만들기 창의 색 고르기 -->
+        <StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml" />
 
         <!-- 둥근 입력창 (Java 의 RoundedScrollPane, 반지름 10) -->
         <Style Selector="TextBox.area">
