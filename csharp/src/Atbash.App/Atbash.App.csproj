@@ -14,7 +14,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Models\" />
     <AvaloniaResource Include="Assets\**" />
   </ItemGroup>
 
@@ -28,6 +27,15 @@
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <!-- 언어 파일: Java 버전과 같은 파일(저장소 맨 위)을 그대로 포함 -->
+    <EmbeddedResource Include="..\..\..\ko.json" LogicalName="Atbash.App.Lang.ko.json" Link="Lang\ko.json" />
+    <EmbeddedResource Include="..\..\..\en.json" LogicalName="Atbash.App.Lang.en.json" Link="Lang\en.json" />
+    <EmbeddedResource Include="..\..\..\ja.json" LogicalName="Atbash.App.Lang.ja.json" Link="Lang\ja.json" />
+    <EmbeddedResource Include="..\..\..\zh.json" LogicalName="Atbash.App.Lang.zh.json" Link="Lang\zh.json" />
   </ItemGroup>
 
   <ItemGroup>

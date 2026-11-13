@@ -1,10 +1,96 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Atbash.App.App"
-             RequestedThemeVariant="Default">
-             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+             RequestedThemeVariant="Light">
+
+    <!-- 테마 색 기본값 (ThemeService.Apply 가 바꿔 끼움). 값은 Java 버전 라이트 테마와 같음 -->
+    <Application.Resources>
+        <SolidColorBrush x:Key="App.Background" Color="#F5F7F9" />
+        <SolidColorBrush x:Key="App.TextArea" Color="#FFFFFF" />
+        <SolidColorBrush x:Key="App.OutputArea" Color="#EBEDEF" />
+        <SolidColorBrush x:Key="App.Foreground" Color="#323232" />
+        <SolidColorBrush x:Key="App.Primary" Color="#007BFF" />
+        <SolidColorBrush x:Key="App.Secondary" Color="#6C757D" />
+        <SolidColorBrush x:Key="App.Border" Color="#DCDFE2" />
+    </Application.Resources>
 
     <Application.Styles>
         <FluentTheme />
+
+        <!-- 둥근 입력창 (Java 의 RoundedScrollPane, 반지름 10) -->
+        <Style Selector="TextBox.area">
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Padding" Value="10,8" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="AcceptsReturn" Value="True" />
+            <Setter Property="VerticalContentAlignment" Value="Top" />
+            <Setter Property="Background" Value="{DynamicResource App.TextArea}" />
+            <Setter Property="Foreground" Value="{DynamicResource App.Foreground}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource App.Border}" />
+        </Style>
+        <Style Selector="TextBox.area.output">
+            <Setter Property="Background" Value="{DynamicResource App.OutputArea}" />
+        </Style>
+        <!-- Fluent 기본 스타일이 마우스를 올리거나 선택할 때 색을 바꾸지 않게 -->
+        <Style Selector="TextBox.area:pointerover /template/ Border#PART_BorderElement,
+                         TextBox.area:focus /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="{DynamicResource App.TextArea}" />
+        </Style>
+        <Style Selector="TextBox.area.output:pointerover /template/ Border#PART_BorderElement,
+                         TextBox.area.output:focus /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="{DynamicResource App.OutputArea}" />
+        </Style>
+        <Style Selector="TextBox.area:pointerover, TextBox.area:focus">
+            <Setter Property="Foreground" Value="{DynamicResource App.Foreground}" />
+        </Style>
+
+        <!-- 둥근 색 버튼 (Java 의 RoundedButton) -->
+        <Style Selector="Button.pill">
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="20,8" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="{DynamicResource App.Secondary}" />
+        </Style>
+        <Style Selector="Button.pill.primary">
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Background" Value="{DynamicResource App.Primary}" />
+        </Style>
+        <Style Selector="Button.pill:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource App.Secondary}" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Opacity" Value="0.88" />
+        </Style>
+        <Style Selector="Button.pill.primary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource App.Primary}" />
+        </Style>
+        <Style Selector="Button.pill:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Opacity" Value="0.75" />
+        </Style>
+        <Style Selector="Button.pill:disabled /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Opacity" Value="0.5" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+
+        <!-- 아래쪽 옵션 입력칸(키워드·비밀번호·숫자·목록)도 테마 색으로 (Java 와 같음) -->
+        <Style Selector="StackPanel.params TextBox, StackPanel.params NumericUpDown, StackPanel.params ComboBox">
+            <Setter Property="Background" Value="{DynamicResource App.TextArea}" />
+            <Setter Property="Foreground" Value="{DynamicResource App.Foreground}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource App.Border}" />
+        </Style>
+        <Style Selector="StackPanel.params TextBox:pointerover /template/ Border#PART_BorderElement,
+                         StackPanel.params TextBox:focus /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="{DynamicResource App.TextArea}" />
+        </Style>
+        <Style Selector="StackPanel.params TextBox:pointerover, StackPanel.params TextBox:focus">
+            <Setter Property="Foreground" Value="{DynamicResource App.Foreground}" />
+        </Style>
+
+        <Style Selector="TextBlock.label">
+            <Setter Property="Foreground" Value="{DynamicResource App.Foreground}" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
     </Application.Styles>
 </Application>

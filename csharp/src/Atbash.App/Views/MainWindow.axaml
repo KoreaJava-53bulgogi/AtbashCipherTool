@@ -1,22 +1,97 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:Atbash.App.ViewModels"
+        xmlns:svc="using:Atbash.App.Services"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="500"
         x:Class="Atbash.App.Views.MainWindow"
         x:DataType="vm:MainViewModel"
         Icon="/Assets/app.ico"
-        Title="아트배쉬 암호화/복호화 툴 v9.0.0">
+        Title="{Binding WindowTitle}"
+        MinWidth="700" MinHeight="400"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource App.Background}">
 
     <Design.DataContext>
-        <!-- This only sets the DataContext for the previewer in an IDE,
-             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
         <vm:MainViewModel />
     </Design.DataContext>
 
-    <TextBox Text="{Binding Greeting}"
-             HorizontalAlignment="Center"
-             VerticalAlignment="Center" />
+    <DockPanel>
+        <!-- 메뉴 (3~5단계에서 파일·도움말 항목이 더 늘어남) -->
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="{Binding L[FILE_MENU]}">
+                <MenuItem Header="{Binding L[SAVE_SETTINGS_MENU]}" ToggleType="CheckBox"
+                          IsChecked="{Binding SaveSettings}" />
+                <MenuItem Header="{Binding L[LIVE_PREVIEW_MENU]}" ToggleType="CheckBox"
+                          IsChecked="{Binding LivePreview}" />
+            </MenuItem>
+            <MenuItem Header="{Binding L[THEME_MENU]}">
+                <MenuItem Header="{Binding L[LIGHT_MODE_MENU]}" ToggleType="Radio" GroupName="theme"
+                          IsChecked="{Binding IsLightTheme, Mode=OneWay}"
+                          Command="{Binding SetThemeCommand}" CommandParameter="LIGHT" />
+                <MenuItem Header="{Binding L[DARK_MODE_MENU]}" ToggleType="Radio" GroupName="theme"
+                          IsChecked="{Binding IsDarkTheme, Mode=OneWay}"
+                          Command="{Binding SetThemeCommand}" CommandParameter="DARK" />
+            </MenuItem>
+            <MenuItem Header="{Binding L[LANGUAGE_MENU]}">
+                <MenuItem Header="{Binding L[KOREAN_MENU]}" ToggleType="Radio" GroupName="lang"
+                          IsChecked="{Binding IsKorean, Mode=OneWay}"
+                          Command="{Binding SetLanguageCommand}" CommandParameter="{x:Static svc:AppLanguage.Korean}" />
+                <MenuItem Header="{Binding L[ENGLISH_MENU]}" ToggleType="Radio" GroupName="lang"
+                          IsChecked="{Binding IsEnglish, Mode=OneWay}"
+                          Command="{Binding SetLanguageCommand}" CommandParameter="{x:Static svc:AppLanguage.English}" />
+                <MenuItem Header="{Binding L[CHINESE_MENU]}" ToggleType="Radio" GroupName="lang"
+                          IsChecked="{Binding IsChinese, Mode=OneWay}"
+                          Command="{Binding SetLanguageCommand}" CommandParameter="{x:Static svc:AppLanguage.Chinese}" />
+                <MenuItem Header="{Binding L[JAPANESE_MENU]}" ToggleType="Radio" GroupName="lang"
+                          IsChecked="{Binding IsJapanese, Mode=OneWay}"
+                          Command="{Binding SetLanguageCommand}" CommandParameter="{x:Static svc:AppLanguage.Japanese}" />
+            </MenuItem>
+        </Menu>
 
+        <Grid Margin="15" RowDefinitions="Auto,*,Auto,*,Auto">
+            <!-- 원본 텍스트 -->
+            <TextBlock Grid.Row="0" Classes="label" Margin="5,0,0,5" Text="{Binding L[INPUT_LABEL]}" />
+            <TextBox Grid.Row="1" Classes="area" Name="InputBox" Margin="0,0,0,10"
+                     Text="{Binding InputText}" />
+
+            <!-- 변환된 텍스트 -->
+            <TextBlock Grid.Row="2" Classes="label" Margin="5,0,0,5" Text="{Binding L[OUTPUT_LABEL]}" />
+            <TextBox Grid.Row="3" Classes="area output" Name="OutputBox" Margin="0,0,0,15" IsReadOnly="True"
+                     Text="{Binding OutputText}" />
+
+            <!-- 아래쪽: 변환 방식 + 옵션 | 복사됨! | 버튼 -->
+            <Grid Grid.Row="4" ColumnDefinitions="Auto,*,Auto">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" Classes="params">
+                    <TextBlock Classes="label" Text="{Binding L[CIPHER_LABEL]}" />
+                    <ComboBox Name="ModeBox" MinWidth="200" ItemsSource="{Binding ModeNames}"
+                              SelectedIndex="{Binding SelectedModeIndex}" />
+
+                    <TextBlock Classes="label" Text="{Binding ParameterLabel}"
+                               IsVisible="{Binding ParameterLabel, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                    <NumericUpDown Name="NumberBox" Width="120" Increment="1" FormatString="0"
+                                   Minimum="{Binding ParameterMinimum}" Maximum="{Binding ParameterMaximum}"
+                                   Value="{Binding ParameterValue}" IsVisible="{Binding IsNumberParameterVisible}" />
+                    <TextBox Name="KeywordBox" Width="140" Text="{Binding Keyword}"
+                             IsVisible="{Binding IsKeywordVisible}" />
+                    <TextBox Name="PasswordBox" Width="160" PasswordChar="●" Text="{Binding Password}"
+                             IsVisible="{Binding IsPasswordVisible}" />
+                </StackPanel>
+
+                <TextBlock Grid.Column="1" Name="FeedbackLabel" HorizontalAlignment="Center" VerticalAlignment="Center"
+                           FontWeight="Bold" FontSize="13" Foreground="{DynamicResource App.Primary}"
+                           Text="{Binding FeedbackText}" Opacity="{Binding FeedbackOpacity}" />
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10">
+                    <Button Name="CopyButton" Classes="pill" Content="{Binding L[COPY_BUTTON]}"
+                            Command="{Binding CopyCommand}" />
+                    <Button Name="ClearButton" Classes="pill" Content="{Binding L[CLEAR_BUTTON]}"
+                            Command="{Binding ClearCommand}" />
+                    <Button Name="TransformButton" Classes="pill primary" Content="{Binding L[TRANSFORM_BUTTON]}"
+                            Command="{Binding TransformCommand}" />
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </DockPanel>
 </Window>
