@@ -132,50 +132,89 @@ public partial class MainViewModel
 
     // ---- 네이버 검색 -----------------------------------------------------------------
 
-    /// <summary>키: 앱에 들어 있는 키 → 예전에 입력한 키 → 물어보고 저장 (Java 와 같음)</summary>
+    /// <summary>
+    /// 키: 사용자가 직접 입력해 저장한 키 → 앱에 들어 있는 키 → 물어보고 저장.
+    /// (Java 는 앱에 든 키를 먼저 썼는데, 그 키가 막히면 고칠 방법이 없어서 순서를 바꿈)
+    /// </summary>
     private async Task<NaverSearch?> NaverClientAsync()
     {
-        if (BundledNaverKeys() is { } bundled) return new NaverSearch(Http, bundled.Id, bundled.Secret);
         if (!string.IsNullOrEmpty(_settings.NaverClientId) && !string.IsNullOrEmpty(_settings.NaverClientSecret))
             return new NaverSearch(Http, _settings.NaverClientId, _settings.NaverClientSecret);
-        if (Dialogs == null) return null;
+        if (BundledNaverKeys() is { } bundled) return new NaverSearch(Http, bundled.Id, bundled.Secret);
+        return await AskNaverKeysAsync() ? new NaverSearch(Http, _settings.NaverClientId!, _settings.NaverClientSecret!) : null;
+    }
 
+    /// <summary>Client ID / Secret 을 물어보고 저장. 취소하면 false</summary>
+    private async Task<bool> AskNaverKeysAsync()
+    {
+        if (Dialogs == null) return false;
         var title = L["NAVER_API_CONFIG_TITLE"];
-        var id = (await Dialogs.PromptTextAsync(title, L["NAVER_ID_PROMPT"]))?.Trim();
-        if (string.IsNullOrEmpty(id)) return null;
+        var id = (await Dialogs.PromptTextAsync(title, L["NAVER_ID_PROMPT"], _settings.NaverClientId ?? ""))?.Trim();
+        if (string.IsNullOrEmpty(id)) return false;
         var secret = (await Dialogs.PromptTextAsync(title, L["NAVER_SECRET_PROMPT"]))?.Trim();
-        if (string.IsNullOrEmpty(secret)) return null;
+        if (string.IsNullOrEmpty(secret)) return false;
 
         // 키는 "설정 저장"과 상관없이 저장 (Java 와 같음)
         _settings.NaverClientId = id;
         _settings.NaverClientSecret = secret;
         _store.Save(_settings);
-        return new NaverSearch(Http, id, secret);
+        return true;
+    }
+
+    /// <summary>파일 → 네이버 API 키 설정...: 새 키를 입력해 저장 (다음 검색부터 사용)</summary>
+    [RelayCommand]
+    private async Task SetNaverKeysAsync()
+    {
+        if (await AskNaverKeysAsync() && Dialogs != null)
+            await Dialogs.ShowMessageAsync(L["NAVER_API_CONFIG_TITLE"], L["NAVER_KEYS_SAVED"]);
+    }
+
+    /// <summary>
+    /// 네이버 API 호출. 키가 거부되면(401/403) 이유를 알려주고 새 키를 받아 한 번 더 시도.
+    /// 실패하면 안내를 보여주고 null.
+    /// </summary>
+    private async Task<(NaverSearch Client, T Result)?> CallNaverAsync<T>(Func<NaverSearch, Task<T>> call)
+    {
+        if (await NaverClientAsync() is not { } naver) return null;
+        for (int attempt = 0; ; attempt++)
+        {
+            IsBusy = true;
+            try
+            {
+                return (naver, await call(naver));
+            }
+            catch (NaverAuthException e)
+            {
+                IsBusy = false;
+                var reason = (e.Status == 403 ? L["NAVER_FORBIDDEN"] : L["NAVER_AUTH_FAILED"]) + "\n(" + e.Message + ")";
+                if (attempt > 0 || !await Dialogs!.ConfirmAsync(L["SEARCH_ERROR_TITLE"], reason + "\n\n" + L["NAVER_ENTER_NEW_KEYS"], MessageKind.Warning))
+                    return null;
+                if (!await AskNaverKeysAsync()) return null;
+                naver = new NaverSearch(Http, _settings.NaverClientId!, _settings.NaverClientSecret!);
+            }
+            catch (Exception e) when (e is System.Net.Http.HttpRequestException or TaskCanceledException or System.Text.Json.JsonException)
+            {
+                IsBusy = false;
+                await Error(L["SEARCH_ERROR_TITLE"], L["NAVER_SEARCH_FAILED"] + "\n" + e.Message);
+                return null;
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
     }
 
     /// <summary>네이버 웹 검색 결과 5개 중 고른 것들의 제목·설명을 원본 텍스트로</summary>
     [RelayCommand]
     private async Task SearchWebAsync()
     {
-        if (Dialogs == null || await NaverClientAsync() is not { } naver) return;
+        if (Dialogs == null) return;
         var keyword = await Dialogs.PromptTextAsync(L["SEARCH_DIALOG_TITLE"], L["SEARCH_KEYWORD_PROMPT"]);
         if (string.IsNullOrWhiteSpace(keyword)) return;
 
-        IReadOnlyList<WebResult> results;
-        IsBusy = true;
-        try
-        {
-            results = await naver.SearchWebAsync(keyword);
-        }
-        catch (Exception e)
-        {
-            await Error(L["SEARCH_ERROR_TITLE"], "Naver API Error: " + e.Message);
-            return;
-        }
-        finally
-        {
-            IsBusy = false;
-        }
+        if (await CallNaverAsync(n => n.SearchWebAsync(keyword)) is not { } found) return;
+        var results = found.Result;
         if (results.Count == 0)
         {
             await Dialogs.ShowMessageAsync(L["SEARCH_ERROR_TITLE"], L["SEARCH_NO_RESULTS"]);
@@ -194,28 +233,19 @@ public partial class MainViewModel
     [RelayCommand]
     private async Task SearchImagesAsync()
     {
-        if (Dialogs == null || await NaverClientAsync() is not { } naver) return;
+        if (Dialogs == null) return;
         var keyword = await Dialogs.PromptTextAsync(L["IMAGE_SEARCH_DIALOG_TITLE"], L["SEARCH_KEYWORD_PROMPT"]);
         if (string.IsNullOrWhiteSpace(keyword)) return;
 
-        IReadOnlyList<ImageResult> results;
-        List<ChoiceItem> items;
-        IsBusy = true;
-        try
-        {
-            results = await naver.SearchImagesAsync(keyword);
-            var thumbs = await Task.WhenAll(results.Select(r => naver.TryDownloadAsync(r.Thumbnail)));
-            items = results.Select((r, i) => new ChoiceItem(r.Title, "", thumbs[i])).ToList();
-        }
-        catch (Exception e)
-        {
-            await Error(L["SEARCH_ERROR_TITLE"], "Naver API Error: " + e.Message);
-            return;
-        }
-        finally
-        {
-            IsBusy = false;
-        }
+        if (await CallNaverAsync(async n =>
+            {
+                var list = await n.SearchImagesAsync(keyword);
+                var thumbs = await Task.WhenAll(list.Select(r => n.TryDownloadAsync(r.Thumbnail)));
+                return (list, thumbs);
+            }) is not { } found) return;
+        var naver = found.Client;
+        var results = found.Result.list;
+        var items = results.Select((r, i) => new ChoiceItem(r.Title, "", found.Result.thumbs[i])).ToList();
         if (results.Count == 0)
         {
             await Dialogs.ShowMessageAsync(L["SEARCH_ERROR_TITLE"], L["SEARCH_NO_RESULTS"]);

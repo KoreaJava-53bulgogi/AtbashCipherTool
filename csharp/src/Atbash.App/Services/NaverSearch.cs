@@ -13,6 +13,14 @@ public sealed record WebResult(string Title, string Description);
 
 public sealed record ImageResult(string Title, string Link, string Thumbnail);
 
+/// <summary>네이버가 API 키를 거부함 (401 인증 실패 / 403 검색 API 권한 없음)</summary>
+public sealed class NaverAuthException : Exception
+{
+    public NaverAuthException(int status, string detail) : base($"HTTP {status}: {detail}") => Status = status;
+
+    public int Status { get; }
+}
+
 /// <summary>
 /// 네이버 검색 API (웹 문서 / 이미지). Java 버전과 같은 주소와 결과 5개.
 /// 결과는 정규식이 아니라 JSON 으로 제대로 읽어서, 따옴표·특수문자가 깨지지 않음.
@@ -63,8 +71,29 @@ public sealed class NaverSearch
         request.Headers.Add("X-Naver-Client-Id", _clientId);
         request.Headers.Add("X-Naver-Client-Secret", _clientSecret);
         using var response = await _http.SendAsync(request);
-        if (!response.IsSuccessStatusCode) throw new HttpRequestException("HTTP error code: " + (int)response.StatusCode);
+        if (!response.IsSuccessStatusCode)
+        {
+            var detail = ErrorMessage(await response.Content.ReadAsStringAsync());
+            // 401: 키가 틀렸거나 지워짐, 403: 그 애플리케이션에 검색 API 를 추가하지 않음
+            if (response.StatusCode is System.Net.HttpStatusCode.Unauthorized or System.Net.HttpStatusCode.Forbidden)
+                throw new NaverAuthException((int)response.StatusCode, detail);
+            throw new HttpRequestException($"HTTP {(int)response.StatusCode}{(detail.Length > 0 ? ": " + detail : "")}");
+        }
         return JsonDocument.Parse(await response.Content.ReadAsStreamAsync());
+    }
+
+    /// <summary>네이버 오류 응답의 errorMessage (없으면 빈 문자열)</summary>
+    private static string ErrorMessage(string body)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(body);
+            return doc.RootElement.TryGetProperty("errorMessage", out var m) ? m.GetString() ?? "" : "";
+        }
+        catch (JsonException)
+        {
+            return "";
+        }
     }
 
     private static IEnumerable<JsonElement> Items(JsonDocument doc) =>

@@ -167,5 +167,11 @@
   "FILE_FILTER_ENCRYPTED": "Encrypted Files (*.enc)",
   "FILE_FILTER_PNG": "PNG Images (*.png)",
   "FILE_FILTER_ALL": "All Files",
-  "SEARCH_NO_RESULTS": "No results found. Try a different keyword."
+  "SEARCH_NO_RESULTS": "No results found. Try a different keyword.",
+  "NAVER_KEYS_MENU": "Naver API Keys...",
+  "NAVER_KEYS_SAVED": "The Naver API keys were saved and will be used from the next search.",
+  "NAVER_AUTH_FAILED": "Naver rejected the API keys. The Client ID or Client Secret is wrong, or the keys were reissued or deleted in the Naver Developers console.",
+  "NAVER_FORBIDDEN": "This Naver application is not allowed to use the Search API. Add 'Search' under Naver Developers > My Applications > API settings.",
+  "NAVER_ENTER_NEW_KEYS": "Enter new keys?",
+  "NAVER_SEARCH_FAILED": "Naver search failed. Please check your internet connection."
 }

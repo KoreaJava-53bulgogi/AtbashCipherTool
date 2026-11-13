@@ -32,6 +32,7 @@
                           InputGesture="Ctrl+Shift+V" />
                 <MenuItem Header="{Binding L[LOAD_SEARCH_MENU]}" Command="{Binding SearchWebCommand}" />
                 <MenuItem Header="{Binding L[LOAD_IMAGE_SEARCH_MENU]}" Command="{Binding SearchImagesCommand}" />
+                <MenuItem Header="{Binding L[NAVER_KEYS_MENU]}" Command="{Binding SetNaverKeysCommand}" />
                 <MenuItem Header="{Binding L[ENCRYPT_FILE_MENU]}" Command="{Binding EncryptFilesCommand}" />
                 <MenuItem Header="{Binding L[DECRYPT_FILE_MENU]}" Command="{Binding DecryptFilesCommand}" />
                 <Separator />

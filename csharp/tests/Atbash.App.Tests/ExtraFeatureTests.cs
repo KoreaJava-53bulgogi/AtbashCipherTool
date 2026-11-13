@@ -201,9 +201,9 @@ public class ExtraFeatureTests : IDisposable
         var vm = NewVm();
         vm.BundledNaverKeys = () => null;
         vm.Http = new HttpClient(handler);
-        _dialogs.TextResults.Enqueue("my-id");
+        _dialogs.TextResults.Enqueue("keyword"); // 검색어를 먼저 묻고
+        _dialogs.TextResults.Enqueue("my-id");   // 키가 없으면 키를 물어봄
         _dialogs.TextResults.Enqueue("my-secret");
-        _dialogs.TextResults.Enqueue("keyword");
         await vm.SearchWebCommand.ExecuteAsync(null);
 
         Assert.Equal("my-id", handler.Requests.Single().Headers.GetValues("X-Naver-Client-Id").Single());
@@ -211,6 +211,58 @@ public class ExtraFeatureTests : IDisposable
         var saved = new SettingsStore(SettingsPath).Load();
         Assert.Equal("my-id", saved.NaverClientId);
         Assert.Equal("my-secret", saved.NaverClientSecret);
+    }
+
+    [AvaloniaFact]
+    public async Task Rejected_keys_ask_for_new_keys_and_retry()
+    {
+        var handler = new FakeHttpHandler
+        {
+            // 앱에 들어 있는 키(test-id)는 거부, 새 키(new-id)는 성공
+            Custom = r => r.Headers.GetValues("X-Naver-Client-Id").Single() == "test-id"
+                ? new HttpResponseMessage(System.Net.HttpStatusCode.Unauthorized)
+                {
+                    Content = new StringContent("""{"errorMessage":"NID AUTH Result Invalid (28) : Authentication failed.","errorCode":"024"}"""),
+                }
+                : null,
+        };
+        handler.Responses["https://openapi.naver.com/v1/search/webkr.json"] = Json("""{"items":[{"title":"결과","description":"설명"}]}""");
+        var vm = NewVm();
+        vm.Http = new HttpClient(handler);
+        _dialogs.TextResults.Enqueue("검색어");
+        _dialogs.ConfirmResults.Enqueue(true);      // 새 키를 입력할까요? → 예
+        _dialogs.TextResults.Enqueue("new-id");
+        _dialogs.TextResults.Enqueue("new-secret");
+        _dialogs.ChooseResults.Enqueue(new[] { 0 });
+        await vm.SearchWebCommand.ExecuteAsync(null);
+
+        Assert.Contains("네이버가 API 키를 거부했습니다", _dialogs.Confirms.Single());
+        Assert.Contains("Authentication failed", _dialogs.Confirms.Single());
+        Assert.Equal("결과\n설명", vm.InputText);
+        Assert.Equal(2, handler.Requests.Count); // 거부된 뒤 새 키로 한 번 더
+
+        // 다음부터는 저장한 키를 앱에 들어 있는 키보다 먼저 씀
+        Assert.Equal("new-id", new SettingsStore(SettingsPath).Load().NaverClientId);
+        _dialogs.TextResults.Enqueue("두 번째");
+        _dialogs.ChooseResults.Enqueue(new[] { 0 });
+        await vm.SearchWebCommand.ExecuteAsync(null);
+        Assert.Equal("new-id", handler.Requests.Last().Headers.GetValues("X-Naver-Client-Id").Single());
+    }
+
+    [AvaloniaFact]
+    public async Task Forbidden_and_network_errors_are_explained()
+    {
+        var handler = new FakeHttpHandler { Custom = _ => new HttpResponseMessage(System.Net.HttpStatusCode.Forbidden) };
+        var vm = NewVm();
+        vm.Http = new HttpClient(handler);
+        _dialogs.TextResults.Enqueue("검색어");
+        await vm.SearchWebCommand.ExecuteAsync(null); // 새 키 입력은 "아니요"
+        Assert.Contains("검색 API 를 쓸 권한이 없습니다", _dialogs.Confirms.Single());
+
+        handler.Custom = _ => throw new HttpRequestException("network down");
+        _dialogs.TextResults.Enqueue("검색어");
+        await vm.SearchWebCommand.ExecuteAsync(null);
+        Assert.Contains("네이버 검색에 실패했습니다", _dialogs.Messages.Last().Message);
     }
 
     // ---- 사용자 테마 -----------------------------------------------------------------

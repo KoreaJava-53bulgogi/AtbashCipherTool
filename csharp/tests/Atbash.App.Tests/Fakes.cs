@@ -126,9 +126,13 @@ public sealed class FakeHttpHandler : HttpMessageHandler
     public Dictionary<string, (string ContentType, byte[] Body)> Responses { get; } = new();
     public List<HttpRequestMessage> Requests { get; } = new();
 
+    /// <summary>요청마다 직접 응답을 정할 때 (null 이면 Responses 사용)</summary>
+    public Func<HttpRequestMessage, HttpResponseMessage?>? Custom { get; set; }
+
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         Requests.Add(request);
+        if (Custom?.Invoke(request) is { } custom) return Task.FromResult(custom);
         var url = request.RequestUri!.ToString();
         foreach (var (prefix, response) in Responses)
         {

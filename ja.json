@@ -130,5 +130,11 @@
   "FILE_FILTER_ENCRYPTED": "暗号化ファイル (*.enc)",
   "FILE_FILTER_PNG": "PNG 画像 (*.png)",
   "FILE_FILTER_ALL": "すべてのファイル",
-  "SEARCH_NO_RESULTS": "検索結果がありません。別のキーワードで検索してください。"
+  "SEARCH_NO_RESULTS": "検索結果がありません。別のキーワードで検索してください。",
+  "NAVER_KEYS_MENU": "Naver API キー設定...",
+  "NAVER_KEYS_SAVED": "Naver API キーを保存しました。次の検索から使用します。",
+  "NAVER_AUTH_FAILED": "Naver が API キーを拒否しました。Client ID または Client Secret が間違っているか、Naver Developers でキーが再発行・削除されています。",
+  "NAVER_FORBIDDEN": "この Naver アプリケーションには検索 API の権限がありません。Naver Developers → マイアプリケーション → API 設定で「検索」を追加してください。",
+  "NAVER_ENTER_NEW_KEYS": "新しいキーを入力しますか?",
+  "NAVER_SEARCH_FAILED": "Naver 検索に失敗しました。インターネット接続を確認してください。"
 }

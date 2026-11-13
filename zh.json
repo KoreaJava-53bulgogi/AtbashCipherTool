@@ -130,5 +130,11 @@
   "FILE_FILTER_ENCRYPTED": "加密文件 (*.enc)",
   "FILE_FILTER_PNG": "PNG 图片 (*.png)",
   "FILE_FILTER_ALL": "所有文件",
-  "SEARCH_NO_RESULTS": "没有搜索结果。请尝试其他关键词。"
+  "SEARCH_NO_RESULTS": "没有搜索结果。请尝试其他关键词。",
+  "NAVER_KEYS_MENU": "Naver API 密钥设置...",
+  "NAVER_KEYS_SAVED": "已保存 Naver API 密钥,将从下次搜索开始使用。",
+  "NAVER_AUTH_FAILED": "Naver 拒绝了 API 密钥。Client ID 或 Client Secret 不正确,或密钥已在 Naver 开发者中心重新签发或删除。",
+  "NAVER_FORBIDDEN": "该 Naver 应用没有使用搜索 API 的权限。请在 Naver 开发者中心 → 我的应用 → API 设置中添加“搜索”。",
+  "NAVER_ENTER_NEW_KEYS": "要输入新的密钥吗?",
+  "NAVER_SEARCH_FAILED": "Naver 搜索失败。请检查网络连接。"
 }
