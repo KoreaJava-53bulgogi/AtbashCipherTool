@@ -95,7 +95,9 @@ Java 8.1.0 → C# 9.0.0 자동 업데이트 (jre 폴더 삭제, C# 앱 재실행
 - [x] release.bat: 빌드 → 설치 파일 → zip → version.json (+ 선택: 코드 서명)
 - [x] Java 8.1.0 → C# 9.0.0 자동 업데이트 실험 (테스트용 앱)
 
-## 7단계: 출시
+## 7단계: 출시 ✅
 
-- [ ] 위 항목 전체 점검
-- [ ] 9.0.0 Release, version.json 공개
+2026-11-13 9.0.0 공개 (GitHub Release v9.0.0, Setup_9.0.0.exe 45MB, version.json 9.0.0).
+
+- [x] 위 항목 전체 점검
+- [x] 9.0.0 Release, version.json 공개
