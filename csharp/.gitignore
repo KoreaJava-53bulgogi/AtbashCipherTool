@@ -8,3 +8,6 @@ TestResults/
 
 # compiled Java helper classes (tools/golden)
 tools/golden/out/
+
+# installer output (release.bat)
+installer/Output/

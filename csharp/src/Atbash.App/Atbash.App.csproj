@@ -9,9 +9,31 @@
     <RootNamespace>Atbash.App</RootNamespace>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <Version>9.0.0</Version>
+    <!-- 파일 속성의 버전에 git 커밋 번호(9.0.0+abc123)가 붙지 않게 -->
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <Product>Atbash Cipher Tool</Product>
     <Company>June</Company>
   </PropertyGroup>
+
+  <!-- 배포용 빌드 (release.bat 의 dotnet publish): .NET 포함, 64비트 Windows -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <!-- 미리 컴파일해서 앱이 더 빨리 켜지게 -->
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <!-- 배포본에는 디버그용 파일(.pdb)을 넣지 않음 -->
+    <DebugType>none</DebugType>
+    <SatelliteResourceLanguages>en;ko;ja;zh-Hans</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <!-- 배포본 정리: 라이브러리가 함께 넣는 디버그 파일(약 100MB)과 64비트에서 쓰지 않는 32비트 OCR 엔진 -->
+  <Target Name="TrimPublishOutput" AfterTargets="Publish">
+    <ItemGroup>
+      <_PublishedPdb Include="$(PublishDir)**\*.pdb" />
+    </ItemGroup>
+    <Delete Files="@(_PublishedPdb)" />
+    <RemoveDir Directories="$(PublishDir)x86" />
+  </Target>
 
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />
