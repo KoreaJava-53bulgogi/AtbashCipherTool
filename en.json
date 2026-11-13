@@ -158,5 +158,13 @@
   "BUTTON_OK": "OK",
   "BUTTON_CANCEL": "Cancel",
   "BUTTON_YES": "Yes",
-  "BUTTON_NO": "No"
+  "BUTTON_NO": "No",
+  "OCR_SUCCESS_FEEDBACK": "Text recognized!",
+  "DECRYPT_WRONG_PASSWORD": "Could not decrypt. The password is wrong or the file is damaged.",
+  "SECURE_DELETE_TITLE": "Secure Wipe",
+  "PASSWORD_REQUIRED": "Please enter a password.",
+  "FILE_FILTER_IMAGES": "Image Files",
+  "FILE_FILTER_ENCRYPTED": "Encrypted Files (*.enc)",
+  "FILE_FILTER_PNG": "PNG Images (*.png)",
+  "FILE_FILTER_ALL": "All Files"
 }

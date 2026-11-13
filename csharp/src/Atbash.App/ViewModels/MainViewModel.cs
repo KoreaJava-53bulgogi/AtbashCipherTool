@@ -44,9 +44,6 @@ public partial class MainViewModel : ViewModelBase
     private DispatcherTimer? _animationTimer;
     private DispatcherTimer? _feedbackTimer;
 
-    /// <summary>창 쪽에서 넣어 줌 (클립보드는 창에 붙어 있음)</summary>
-    public Func<string, Task>? SetClipboardText { get; set; }
-
     public static string Version { get; } = FormatVersion(Assembly.GetExecutingAssembly().GetName().Version);
 
     public MainViewModel() : this(new SettingsStore(), Application.Current)
@@ -182,7 +179,7 @@ public partial class MainViewModel : ViewModelBase
             OutputText = "LOL";
             return;
         }
-        if (SetClipboardText != null) await SetClipboardText(OutputText);
+        if (Clipboard != null) await Clipboard.SetTextAsync(OutputText);
         ShowFeedback(L["COPY_FEEDBACK"]);
     }
 

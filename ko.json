@@ -158,5 +158,13 @@
   "BUTTON_OK": "확인",
   "BUTTON_CANCEL": "취소",
   "BUTTON_YES": "예",
-  "BUTTON_NO": "아니요"
+  "BUTTON_NO": "아니요",
+  "OCR_SUCCESS_FEEDBACK": "텍스트를 읽었습니다!",
+  "DECRYPT_WRONG_PASSWORD": "복호화하지 못했습니다. 비밀번호가 틀렸거나 파일이 손상되었습니다.",
+  "SECURE_DELETE_TITLE": "안전 삭제",
+  "PASSWORD_REQUIRED": "비밀번호를 입력하세요.",
+  "FILE_FILTER_IMAGES": "이미지 파일",
+  "FILE_FILTER_ENCRYPTED": "암호화된 파일 (*.enc)",
+  "FILE_FILTER_PNG": "PNG 이미지 (*.png)",
+  "FILE_FILTER_ALL": "모든 파일"
 }

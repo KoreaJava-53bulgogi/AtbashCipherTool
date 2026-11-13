@@ -121,5 +121,13 @@
   "BUTTON_OK": "OK",
   "BUTTON_CANCEL": "キャンセル",
   "BUTTON_YES": "はい",
-  "BUTTON_NO": "いいえ"
+  "BUTTON_NO": "いいえ",
+  "OCR_SUCCESS_FEEDBACK": "テキストを読み取りました!",
+  "DECRYPT_WRONG_PASSWORD": "復号できませんでした。パスワードが違うか、ファイルが壊れています。",
+  "SECURE_DELETE_TITLE": "安全な削除",
+  "PASSWORD_REQUIRED": "パスワードを入力してください。",
+  "FILE_FILTER_IMAGES": "画像ファイル",
+  "FILE_FILTER_ENCRYPTED": "暗号化ファイル (*.enc)",
+  "FILE_FILTER_PNG": "PNG 画像 (*.png)",
+  "FILE_FILTER_ALL": "すべてのファイル"
 }

@@ -121,5 +121,13 @@
   "BUTTON_OK": "确定",
   "BUTTON_CANCEL": "取消",
   "BUTTON_YES": "是",
-  "BUTTON_NO": "否"
+  "BUTTON_NO": "否",
+  "OCR_SUCCESS_FEEDBACK": "已识别文字!",
+  "DECRYPT_WRONG_PASSWORD": "无法解密。密码错误或文件已损坏。",
+  "SECURE_DELETE_TITLE": "安全删除",
+  "PASSWORD_REQUIRED": "请输入密码。",
+  "FILE_FILTER_IMAGES": "图片文件",
+  "FILE_FILTER_ENCRYPTED": "加密文件 (*.enc)",
+  "FILE_FILTER_PNG": "PNG 图片 (*.png)",
+  "FILE_FILTER_ALL": "所有文件"
 }

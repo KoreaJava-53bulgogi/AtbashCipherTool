@@ -27,6 +27,7 @@
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="Tesseract" Version="5.2.0" />
   </ItemGroup>
 
 
@@ -36,6 +37,11 @@
     <EmbeddedResource Include="..\..\..\en.json" LogicalName="Atbash.App.Lang.en.json" Link="Lang\en.json" />
     <EmbeddedResource Include="..\..\..\ja.json" LogicalName="Atbash.App.Lang.ja.json" Link="Lang\ja.json" />
     <EmbeddedResource Include="..\..\..\zh.json" LogicalName="Atbash.App.Lang.zh.json" Link="Lang\zh.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- OCR 데이터 (Java 버전과 같은 파일): 실행 파일 옆 tessdata 폴더로 복사 -->
+    <None Include="..\..\..\tessdata\*.traineddata" Link="tessdata\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
