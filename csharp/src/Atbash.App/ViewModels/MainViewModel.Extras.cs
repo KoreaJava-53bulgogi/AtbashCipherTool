@@ -31,7 +31,8 @@ public sealed partial class CustomThemeItem : ObservableObject
 }
 
 /// <summary>
-/// 부가 기능 (4단계): 변환 기록, QR 코드, 네이버 검색·이미지 검색, 사용자 테마, 정보 창.
+/// 부가 기능 (4단계): 변환 기록, QR 코드, 사용자 테마, 정보 창.
+/// (네이버 검색·이미지 검색은 9.0.0 에서 뺐음: 네이버 검색 API 가 유료 전환 예정인 NAVER API HUB 로 옮겨져서)
 /// 동작은 Java 버전과 같음.
 /// </summary>
 public partial class MainViewModel
@@ -43,11 +44,8 @@ public partial class MainViewModel
 
     private readonly List<HistoryEntry> _history = new();
 
-    /// <summary>네이버 검색에 쓰는 HTTP (테스트에서 가짜로 바꿈)</summary>
+    /// <summary>업데이트 확인에 쓰는 HTTP</summary>
     public HttpClient Http { get; set; } = SharedHttp;
-
-    /// <summary>앱에 들어 있는 네이버 키 (테스트에서 바꿈)</summary>
-    public Func<(string Id, string Secret)?> BundledNaverKeys { get; set; } = NaverKeys.FromBundledFile;
 
     public IReadOnlyList<HistoryEntry> History => _history;
 
@@ -128,150 +126,6 @@ public partial class MainViewModel
         {
             await Error(L["SAVE_ERROR_TITLE"], L["SAVE_IMAGE_ERROR_MESSAGE"] + e.Message);
         }
-    }
-
-    // ---- 네이버 검색 -----------------------------------------------------------------
-
-    /// <summary>
-    /// 키: 사용자가 직접 입력해 저장한 키 → 앱에 들어 있는 키 → 물어보고 저장.
-    /// (Java 는 앱에 든 키를 먼저 썼는데, 그 키가 막히면 고칠 방법이 없어서 순서를 바꿈)
-    /// </summary>
-    private async Task<NaverSearch?> NaverClientAsync()
-    {
-        if (!string.IsNullOrEmpty(_settings.NaverClientId) && !string.IsNullOrEmpty(_settings.NaverClientSecret))
-            return new NaverSearch(Http, _settings.NaverClientId, _settings.NaverClientSecret);
-        if (BundledNaverKeys() is { } bundled) return new NaverSearch(Http, bundled.Id, bundled.Secret);
-        return await AskNaverKeysAsync() ? new NaverSearch(Http, _settings.NaverClientId!, _settings.NaverClientSecret!) : null;
-    }
-
-    /// <summary>Client ID / Secret 을 물어보고 저장. 취소하면 false</summary>
-    private async Task<bool> AskNaverKeysAsync()
-    {
-        if (Dialogs == null) return false;
-        var title = L["NAVER_API_CONFIG_TITLE"];
-        var id = (await Dialogs.PromptTextAsync(title, L["NAVER_ID_PROMPT"], _settings.NaverClientId ?? ""))?.Trim();
-        if (string.IsNullOrEmpty(id)) return false;
-        var secret = (await Dialogs.PromptTextAsync(title, L["NAVER_SECRET_PROMPT"]))?.Trim();
-        if (string.IsNullOrEmpty(secret)) return false;
-
-        // 키는 "설정 저장"과 상관없이 저장 (Java 와 같음)
-        _settings.NaverClientId = id;
-        _settings.NaverClientSecret = secret;
-        _store.Save(_settings);
-        return true;
-    }
-
-    /// <summary>파일 → 네이버 API 키 설정...: 새 키를 입력해 저장 (다음 검색부터 사용)</summary>
-    [RelayCommand]
-    private async Task SetNaverKeysAsync()
-    {
-        if (await AskNaverKeysAsync() && Dialogs != null)
-            await Dialogs.ShowMessageAsync(L["NAVER_API_CONFIG_TITLE"], L["NAVER_KEYS_SAVED"]);
-    }
-
-    /// <summary>
-    /// 네이버 API 호출. 키가 거부되면(401/403) 이유를 알려주고 새 키를 받아 한 번 더 시도.
-    /// 실패하면 안내를 보여주고 null.
-    /// </summary>
-    private async Task<(NaverSearch Client, T Result)?> CallNaverAsync<T>(Func<NaverSearch, Task<T>> call)
-    {
-        if (await NaverClientAsync() is not { } naver) return null;
-        for (int attempt = 0; ; attempt++)
-        {
-            IsBusy = true;
-            try
-            {
-                return (naver, await call(naver));
-            }
-            catch (NaverAuthException e)
-            {
-                IsBusy = false;
-                var reason = (e.Status == 403 ? L["NAVER_FORBIDDEN"] : L["NAVER_AUTH_FAILED"]) + "\n(" + e.Message + ")";
-                if (attempt > 0 || !await Dialogs!.ConfirmAsync(L["SEARCH_ERROR_TITLE"], reason + "\n\n" + L["NAVER_ENTER_NEW_KEYS"], MessageKind.Warning))
-                    return null;
-                if (!await AskNaverKeysAsync()) return null;
-                naver = new NaverSearch(Http, _settings.NaverClientId!, _settings.NaverClientSecret!);
-            }
-            catch (Exception e) when (e is System.Net.Http.HttpRequestException or TaskCanceledException or System.Text.Json.JsonException)
-            {
-                IsBusy = false;
-                await Error(L["SEARCH_ERROR_TITLE"], L["NAVER_SEARCH_FAILED"] + "\n" + e.Message);
-                return null;
-            }
-            finally
-            {
-                IsBusy = false;
-            }
-        }
-    }
-
-    /// <summary>네이버 웹 검색 결과 5개 중 고른 것들의 제목·설명을 원본 텍스트로</summary>
-    [RelayCommand]
-    private async Task SearchWebAsync()
-    {
-        if (Dialogs == null) return;
-        var keyword = await Dialogs.PromptTextAsync(L["SEARCH_DIALOG_TITLE"], L["SEARCH_KEYWORD_PROMPT"]);
-        if (string.IsNullOrWhiteSpace(keyword)) return;
-
-        if (await CallNaverAsync(n => n.SearchWebAsync(keyword)) is not { } found) return;
-        var results = found.Result;
-        if (results.Count == 0)
-        {
-            await Dialogs.ShowMessageAsync(L["SEARCH_ERROR_TITLE"], L["SEARCH_NO_RESULTS"]);
-            return;
-        }
-
-        var picked = await Dialogs.ChooseAsync(L["SEARCH_DIALOG_TITLE"], L["SEARCH_SELECT_PROMPT"],
-            results.Select(r => new ChoiceItem(r.Title, r.Description)).ToList(), multiple: true);
-        if (picked.Count == 0) return;
-        StopAnimation();
-        InputText = string.Join("\n\n", picked.Select(i => results[i].Title + "\n" + results[i].Description)).Trim();
-        OutputText = "";
-    }
-
-    /// <summary>네이버 이미지 검색 결과 5개 중 하나를 골라 글자를 읽음</summary>
-    [RelayCommand]
-    private async Task SearchImagesAsync()
-    {
-        if (Dialogs == null) return;
-        var keyword = await Dialogs.PromptTextAsync(L["IMAGE_SEARCH_DIALOG_TITLE"], L["SEARCH_KEYWORD_PROMPT"]);
-        if (string.IsNullOrWhiteSpace(keyword)) return;
-
-        if (await CallNaverAsync(async n =>
-            {
-                var list = await n.SearchImagesAsync(keyword);
-                var thumbs = await Task.WhenAll(list.Select(r => n.TryDownloadAsync(r.Thumbnail)));
-                return (list, thumbs);
-            }) is not { } found) return;
-        var naver = found.Client;
-        var results = found.Result.list;
-        var items = results.Select((r, i) => new ChoiceItem(r.Title, "", found.Result.thumbs[i])).ToList();
-        if (results.Count == 0)
-        {
-            await Dialogs.ShowMessageAsync(L["SEARCH_ERROR_TITLE"], L["SEARCH_NO_RESULTS"]);
-            return;
-        }
-
-        var picked = await Dialogs.ChooseAsync(L["IMAGE_SEARCH_DIALOG_TITLE"], L["IMAGE_SEARCH_SELECT_PROMPT"], items, multiple: false);
-        if (picked.Count == 0) return;
-        var chosen = results[picked[0]];
-
-        IsBusy = true;
-        byte[]? image;
-        try
-        {
-            image = await naver.TryDownloadAsync(chosen.Link) ?? await naver.TryDownloadAsync(chosen.Thumbnail);
-        }
-        finally
-        {
-            IsBusy = false;
-        }
-        if (image == null)
-        {
-            await Error(L["SEARCH_ERROR_TITLE"], "Image Download Error: " + chosen.Link);
-            return;
-        }
-        await RecognizeAsync(() => image);
     }
 
     // ---- 사용자 테마 -----------------------------------------------------------------

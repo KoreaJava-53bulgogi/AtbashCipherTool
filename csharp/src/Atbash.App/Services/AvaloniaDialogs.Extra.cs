@@ -13,7 +13,7 @@ using Avalonia.Media.Imaging;
 
 namespace Atbash.App.Services;
 
-/// <summary>4단계에서 추가한 창들: 글자 입력, 목록 고르기, 테마 색, 이미지, 변환 기록, 정보</summary>
+/// <summary>4단계에서 추가한 창들: 글자 입력, 테마 색, 이미지, 변환 기록, 정보</summary>
 public sealed partial class AvaloniaDialogs
 {
     public async Task<string?> PromptTextAsync(string title, string message, string initial = "")
@@ -33,73 +33,6 @@ public sealed partial class AvaloniaDialogs
         window.Opened += (_, _) => box.Focus();
         await window.ShowDialog(_owner);
         return result;
-    }
-
-    public async Task<IReadOnlyList<int>> ChooseAsync(string title, string prompt, IReadOnlyList<ChoiceItem> items, bool multiple)
-    {
-        var l = _l();
-        IReadOnlyList<int> result = Array.Empty<int>();
-        var window = NewWindow(title);
-        window.SizeToContent = SizeToContent.Manual;
-        window.Width = 560;
-        window.Height = 460;
-        window.CanResize = true;
-
-        var list = new ListBox
-        {
-            SelectionMode = multiple ? SelectionMode.Multiple | SelectionMode.Toggle : SelectionMode.Single,
-            ItemsSource = items.Select(ItemView).ToList(),
-        };
-        var (ok, cancel) = OkCancel(l);
-        ok.Click += (_, _) =>
-        {
-            result = list.Selection.SelectedIndexes.Order().ToList();
-            window.Close();
-        };
-        cancel.Click += (_, _) => window.Close();
-        list.DoubleTapped += (_, _) =>
-        {
-            if (multiple) return;
-            result = list.Selection.SelectedIndexes.ToList();
-            window.Close();
-        };
-
-        var grid = new Grid { RowDefinitions = new RowDefinitions("Auto,*,Auto"), Margin = new Thickness(16) };
-        var label = new TextBlock { Text = prompt, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 8) };
-        var buttons = Buttons(ok, cancel);
-        Grid.SetRow(label, 0);
-        Grid.SetRow(list, 1);
-        Grid.SetRow(buttons, 2);
-        grid.Children.Add(label);
-        grid.Children.Add(list);
-        grid.Children.Add(buttons);
-        window.Content = grid;
-        await window.ShowDialog(_owner);
-        return result;
-    }
-
-    private static Control ItemView(ChoiceItem item)
-    {
-        var text = new StackPanel { Spacing = 2, VerticalAlignment = VerticalAlignment.Center };
-        text.Children.Add(new TextBlock { Text = item.Title, FontWeight = FontWeight.Bold, TextWrapping = TextWrapping.Wrap, MaxWidth = 440 });
-        if (item.Detail.Length > 0)
-            text.Children.Add(new TextBlock { Text = item.Detail, TextWrapping = TextWrapping.Wrap, MaxWidth = 440, Opacity = 0.8 });
-
-        var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, Margin = new Thickness(2, 4) };
-        if (item.Image != null)
-        {
-            try
-            {
-                using var stream = new MemoryStream(item.Image);
-                row.Children.Add(new Image { Source = new Bitmap(stream), Width = 80, Height = 80, Stretch = Stretch.Uniform });
-            }
-            catch (Exception)
-            {
-                // 그림을 못 읽으면 글자만 보여줌
-            }
-        }
-        row.Children.Add(text);
-        return row;
     }
 
     public async Task<ThemeColors?> EditThemeColorsAsync(string title, ThemeColors initial)

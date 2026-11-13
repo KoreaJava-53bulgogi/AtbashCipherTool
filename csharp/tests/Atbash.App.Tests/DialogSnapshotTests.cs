@@ -78,17 +78,6 @@ public class DialogSnapshotTests
         w.Close();
         Dispatcher.UIThread.RunJobs();
 
-        // 검색 결과 고르기
-        _ = dialogs.ChooseAsync("네이버 검색", "불러올 검색 결과를 선택하세요 (복수 선택 가능):", new List<ChoiceItem>
-        {
-            new("아트배쉬 암호란?", "알파벳을 거꾸로 바꾸는 고대 히브리 암호입니다."),
-            new("카이사르 암호", "글자를 일정한 칸만큼 밀어서 바꾸는 암호."),
-        }, multiple: true);
-        Dispatcher.UIThread.RunJobs();
-        w = OpenedDialog(owner);
-        Snapshot.Save(w, "stage4-choose");
-        w.Close();
-        Dispatcher.UIThread.RunJobs();
     }
 
     [AvaloniaFact]

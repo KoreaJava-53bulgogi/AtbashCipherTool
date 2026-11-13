@@ -25,7 +25,7 @@ public class JavaMigrationTests : IDisposable
         ["saveSettingsEnabled"] = "true",
         ["custom.themes.list"] = "ttt,hight 2,갈색 테마,Mixed한글",
         ["custom.theme.갈색 테마.main.background"] = "-6724096",
-        ["naverClientId"] = "KqXpD39zL6gYUTWviEJc",
+        ["sampleClientId"] = "DummyId0123ABCdefXYZ", // 대문자·소문자·숫자가 섞인 값
         ["slash/and\\back"] = "a/b\\c",
         ["lastUpdateCheck"] = "1762992000000",
         ["emoji😀"] = "값 😀",
@@ -81,7 +81,6 @@ public class JavaMigrationTests : IDisposable
         Assert.Equal(-2, s.HangulShift);
         Assert.True(s.LivePreview);
         Assert.Equal((1550, 822), (s.WindowWidth, s.WindowHeight));
-        Assert.Equal(("my-id", "my-secret"), (s.NaverClientId, s.NaverClientSecret));
         Assert.Equal("8.1.0", s.SkippedVersion);
         Assert.Equal(1762992000000, s.LastUpdateCheck);
         Assert.True(s.MigratedFromJava);

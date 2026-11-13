@@ -38,8 +38,6 @@ public sealed class FakeDialogs : IDialogs
 
     public Queue<string?> TextResults { get; } = new();
     public List<string> TextPrompts { get; } = new();
-    public Queue<IReadOnlyList<int>> ChooseResults { get; } = new();
-    public List<IReadOnlyList<ChoiceItem>> ChooseItems { get; } = new();
     public Queue<ThemeColors?> ThemeResults { get; } = new();
     public Queue<int> ImageResults { get; } = new();
     public List<byte[]> ShownImages { get; } = new();
@@ -54,12 +52,6 @@ public sealed class FakeDialogs : IDialogs
     {
         TextPrompts.Add(message);
         return Task.FromResult(TextResults.Count > 0 ? TextResults.Dequeue() : null);
-    }
-
-    public Task<IReadOnlyList<int>> ChooseAsync(string title, string prompt, IReadOnlyList<ChoiceItem> items, bool multiple)
-    {
-        ChooseItems.Add(items);
-        return Task.FromResult(ChooseResults.Count > 0 ? ChooseResults.Dequeue() : (IReadOnlyList<int>)Array.Empty<int>());
     }
 
     public Task<ThemeColors?> EditThemeColorsAsync(string title, ThemeColors initial) =>
@@ -118,31 +110,6 @@ public sealed class FakeProgress : IProgressWindow
     public void Update(long done, long total) => Updates.Add((done, total));
 
     public void Close() => Closed = true;
-}
-
-/// <summary>네이버 API 대신 미리 정한 응답을 돌려주는 가짜 HTTP. 받은 요청을 기록함</summary>
-public sealed class FakeHttpHandler : HttpMessageHandler
-{
-    public Dictionary<string, (string ContentType, byte[] Body)> Responses { get; } = new();
-    public List<HttpRequestMessage> Requests { get; } = new();
-
-    /// <summary>요청마다 직접 응답을 정할 때 (null 이면 Responses 사용)</summary>
-    public Func<HttpRequestMessage, HttpResponseMessage?>? Custom { get; set; }
-
-    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-    {
-        Requests.Add(request);
-        if (Custom?.Invoke(request) is { } custom) return Task.FromResult(custom);
-        var url = request.RequestUri!.ToString();
-        foreach (var (prefix, response) in Responses)
-        {
-            if (!url.StartsWith(prefix)) continue;
-            var content = new ByteArrayContent(response.Body);
-            content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(response.ContentType);
-            return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = content });
-        }
-        return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.NotFound));
-    }
 }
 
 public sealed class FakeClipboard : IClipboardAccess

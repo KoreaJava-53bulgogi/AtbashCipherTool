@@ -48,7 +48,7 @@ public sealed class RegistryJavaPrefs : IJavaPrefsSource
 /// <summary>
 /// Java 버전(7.x~8.x)의 설정을 C# 설정으로 옮김. C# 설정 파일이 아직 없을 때 처음 한 번만.
 /// 언어, 테마(사용자 테마 포함), 변환 방식, 옵션 값, 실시간 변환, 설정 저장, 창 크기,
-/// 네이버 키, 건너뛴 버전, 마지막 업데이트 확인 시각.
+/// 건너뛴 버전, 마지막 업데이트 확인 시각. (네이버 키는 기능을 뺐으므로 옮기지 않음)
 /// </summary>
 public static class JavaSettingsImporter
 {
@@ -83,8 +83,6 @@ public static class JavaSettingsImporter
         s.SaveSettingsEnabled = Bool(p, "saveSettingsEnabled", s.SaveSettingsEnabled);
         s.WindowWidth = Int(p, "windowWidth", s.WindowWidth, 700, 10000);
         s.WindowHeight = Int(p, "windowHeight", s.WindowHeight, 400, 10000);
-        s.NaverClientId = Text(p, "naverClientId");
-        s.NaverClientSecret = Text(p, "naverClientSecret");
         s.SkippedVersion = Text(p, "skippedVersion");
         if (p.TryGetValue("lastUpdateCheck", out var last) && long.TryParse(last, out var ms)) s.LastUpdateCheck = ms;
 

@@ -63,9 +63,6 @@
     <EmbeddedResource Include="..\..\..\zh.json" LogicalName="Atbash.App.Lang.zh.json" Link="Lang\zh.json" />
     <!-- 도움말 → 정보 에 보여주는 README (Java 버전과 같은 파일) -->
     <EmbeddedResource Include="..\..\..\README.txt" LogicalName="Atbash.App.README.txt" Link="README.txt" />
-    <!-- 네이버 API 키: 로컬에만 있는 파일 (git 에 없음). 없으면 사용자가 입력 -->
-    <EmbeddedResource Include="..\..\..\naver.properties" LogicalName="Atbash.App.naver.properties" Link="naver.properties"
-                      Condition="Exists('..\..\..\naver.properties')" />
   </ItemGroup>
 
   <ItemGroup>

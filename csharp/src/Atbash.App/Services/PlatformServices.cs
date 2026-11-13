@@ -32,9 +32,6 @@ public interface IDialogs
     /// <summary>글자 한 줄 입력. 취소하면 null</summary>
     Task<string?> PromptTextAsync(string title, string message, string initial = "");
 
-    /// <summary>목록에서 고르기 (제목·설명·작은 그림). 취소하거나 아무것도 안 고르면 빈 목록</summary>
-    Task<IReadOnlyList<int>> ChooseAsync(string title, string prompt, IReadOnlyList<ChoiceItem> items, bool multiple);
-
     /// <summary>사용자 테마의 색 5개 고르기. 취소하면 null</summary>
     Task<ThemeColors?> EditThemeColorsAsync(string title, ThemeColors initial);
 
@@ -65,9 +62,6 @@ public interface IProgressWindow
 
     void Close();
 }
-
-/// <summary>목록의 한 항목</summary>
-public sealed record ChoiceItem(string Title, string Detail = "", byte[]? Image = null);
 
 /// <summary>변환 기록 한 건. 앱을 닫으면 사라짐 (비밀번호·원문이 디스크에 남지 않도록)</summary>
 public sealed record HistoryEntry(System.DateTime Time, int ModeIndex, string ModeName, int Key, string Input, string Output);

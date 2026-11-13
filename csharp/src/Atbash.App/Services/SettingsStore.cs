@@ -25,10 +25,6 @@ public sealed class AppSettings
     /// <summary>사용자 테마들 (Theme 에 이름이 들어 있으면 그 테마를 씀)</summary>
     public List<CustomThemeData> CustomThemes { get; set; } = new();
 
-    /// <summary>사용자가 직접 입력한 네이버 API 키 (앱에 키가 들어 있지 않을 때만 사용)</summary>
-    public string? NaverClientId { get; set; }
-    public string? NaverClientSecret { get; set; }
-
     /// <summary>"이 버전 건너뛰기" 를 고른 버전</summary>
     public string? SkippedVersion { get; set; }
 

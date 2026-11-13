@@ -62,9 +62,9 @@ QR 은 만든 이미지를 다시 해독해서 원문(한글·이모지)과 같�
 
 - [x] 변환 기록 (Ctrl+H, 최근 50개, 메모리에만, 불러오기·결과 복사·모두 지우기)
 - [x] QR 코드로 저장 (미리보기, PNG, 너무 길면 안내)
-- [x] 네이버 검색 결과 불러오기 (여러 개 선택)
-- [x] 네이버 이미지 검색 후 OCR
-- [x] 네이버 API 키: 내장 키 → 저장된 키 → 사용자에게 물어봄
+- [-] ~~네이버 검색 결과 불러오기~~ — 9.0.0 에서 뺌 (네이버 검색 API 가 NAVER API HUB 로 이관, 유료 전환 예정)
+- [-] ~~네이버 이미지 검색 후 OCR~~ — 위와 같음
+- [-] ~~네이버 API 키~~ — 위와 같음
 - [x] 사용자 테마: 만들기(색 5개), 선택, 삭제, 내보내기/가져오기 `.theme` (호환: Java Properties 형식)
 - [x] 설정 저장 켜기/끄기
 - [x] 도움말 → 정보 (README, 클릭하면 이스터 에그 링크)
@@ -80,7 +80,7 @@ Java 가 레지스트리에 실제로 저장한 이름·값(한글·이모지·�
 - [x] Java 설정 가져오기 (레지스트리 HKCU\Software\JavaSoft\Prefs\<unnamed>):
       theme, language, cipherMode, caesarShift, scytaleDiameter, hangulShift, livePreview,
       saveSettingsEnabled, windowWidth/Height, custom.themes.list, custom.theme.*,
-      naverClientId/Secret, skippedVersion, lastUpdateCheck
+      skippedVersion, lastUpdateCheck (네이버 키는 기능을 빼서 옮기지 않음)
 - [x] 업데이트 알림 (하루 한 번, 수동 확인, 이 버전 건너뛰기)
 - [x] 자동 업데이트 (내려받기, SHA-256 확인, /SILENT 설치, 앱 종료, 재실행)
 - [x] 테스트용 업데이트 주소 (ATBASH_UPDATE_URL)

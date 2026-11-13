@@ -16,7 +16,7 @@ public class JavaPrefsProbe {
             {"saveSettingsEnabled", "true"},
             {"custom.themes.list", "ttt,hight 2,갈색 테마,Mixed한글"},
             {"custom.theme.갈색 테마.main.background", "-6724096"},
-            {"naverClientId", "KqXpD39zL6gYUTWviEJc"},
+            {"sampleClientId", "DummyId0123ABCdefXYZ"},
             {"slash/and\\back", "a/b\\c"},
             {"lastUpdateCheck", "1762992000000"},
             {"emoji😀", "값 😀"},

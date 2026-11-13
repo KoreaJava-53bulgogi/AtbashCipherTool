@@ -14,7 +14,7 @@ using ZXing.Common;
 
 namespace Atbash.App.Tests;
 
-/// <summary>4단계 부가 기능: 변환 기록, QR, 네이버 검색, 사용자 테마, 정보 창, 스플래시</summary>
+/// <summary>4단계 부가 기능: 변환 기록, QR, 사용자 테마, 정보 창, 스플래시</summary>
 public class ExtraFeatureTests : IDisposable
 {
     private readonly string _dir = Directory.CreateTempSubdirectory("atbash-ui-extra-").FullName;
@@ -30,7 +30,6 @@ public class ExtraFeatureTests : IDisposable
         {
             Dialogs = _dialogs,
             Clipboard = _clipboard,
-            BundledNaverKeys = () => ("test-id", "test-secret"),
         };
 
     private string PathOf(string name) => Path.Combine(_dir, name);
@@ -145,146 +144,6 @@ public class ExtraFeatureTests : IDisposable
         await vm.SaveQrCommand.ExecuteAsync(null);
         Assert.Contains("너무 길어서", Assert.Single(_dialogs.Messages).Message);
         Assert.Empty(_dialogs.ShownImages);
-    }
-
-    // ---- 네이버 검색 -----------------------------------------------------------------
-
-    private static (string, byte[]) Json(string s) => ("application/json", Encoding.UTF8.GetBytes(s));
-
-    [AvaloniaFact]
-    public async Task Naver_web_search_puts_chosen_results_in_the_input()
-    {
-        var handler = new FakeHttpHandler();
-        handler.Responses["https://naverapihub.apigw.ntruss.com/search/v1/webkr"] = Json("""
-            {"items":[
-              {"title":"<b>아트배쉬</b> 암호란?","description":"알파벳을 &quot;거꾸로&quot; 바꾸는 암호"},
-              {"title":"두 번째","description":"설명 2"},
-              {"title":"세 번째 \"따옴표\"","description":"설명 3"}
-            ]}
-            """);
-        var vm = NewVm();
-        vm.Http = new HttpClient(handler);
-        _dialogs.TextResults.Enqueue("아트배쉬");
-        _dialogs.ChooseResults.Enqueue(new[] { 0, 2 });
-        await vm.SearchWebCommand.ExecuteAsync(null);
-
-        var request = Assert.Single(handler.Requests);
-        Assert.Contains("query=%EC%95%84%ED%8A%B8%EB%B0%B0%EC%89%AC", request.RequestUri!.AbsoluteUri);
-        Assert.Equal("test-id", request.Headers.GetValues("X-NCP-APIGW-API-KEY-ID").Single());
-        Assert.Equal("test-secret", request.Headers.GetValues("X-NCP-APIGW-API-KEY").Single());
-        Assert.StartsWith("https://naverapihub.apigw.ntruss.com/search/v1/webkr?display=5&format=json&query=", request.RequestUri!.AbsoluteUri);
-        Assert.Equal("아트배쉬 암호란?\n알파벳을 \"거꾸로\" 바꾸는 암호\n\n세 번째 \"따옴표\"\n설명 3", vm.InputText);
-    }
-
-    [AvaloniaFact]
-    public async Task Naver_image_search_runs_ocr_on_the_chosen_image()
-    {
-        var image = TextImageExporter.RenderPng("NAVER IMAGE 42", Colors.White, Colors.Black, 36);
-        var handler = new FakeHttpHandler();
-        handler.Responses["https://naverapihub.apigw.ntruss.com/search/v1/image"] = Json("""
-            {"items":[{"title":"이미지 1","link":"https://img.example/full.png","thumbnail":"https://img.example/thumb.png"}]}
-            """);
-        handler.Responses["https://img.example/"] = ("image/png", image);
-        var vm = NewVm();
-        vm.Http = new HttpClient(handler);
-        _dialogs.TextResults.Enqueue("keyword");
-        _dialogs.ChooseResults.Enqueue(new[] { 0 });
-        await vm.SearchImagesCommand.ExecuteAsync(null);
-
-        Assert.NotNull(_dialogs.ChooseItems.Single()[0].Image); // 미리보기 그림을 보여줌
-        Assert.Contains("NAVER", vm.InputText);
-    }
-
-    [AvaloniaFact]
-    public async Task Naver_keys_are_asked_and_saved_when_not_bundled()
-    {
-        var handler = new FakeHttpHandler();
-        handler.Responses["https://naverapihub.apigw.ntruss.com/"] = Json("""{"items":[]}""");
-        var vm = NewVm();
-        vm.BundledNaverKeys = () => null;
-        vm.Http = new HttpClient(handler);
-        _dialogs.TextResults.Enqueue("keyword"); // 검색어를 먼저 묻고
-        _dialogs.TextResults.Enqueue("my-id");   // 키가 없으면 키를 물어봄
-        _dialogs.TextResults.Enqueue("my-secret");
-        await vm.SearchWebCommand.ExecuteAsync(null);
-
-        Assert.Equal("my-id", handler.Requests.Single().Headers.GetValues("X-NCP-APIGW-API-KEY-ID").Single());
-        Assert.Equal("검색 결과가 없습니다. 다른 키워드로 검색해보세요.", _dialogs.Messages.Single().Message);
-        var saved = new SettingsStore(SettingsPath).Load();
-        Assert.Equal("my-id", saved.NaverClientId);
-        Assert.Equal("my-secret", saved.NaverClientSecret);
-    }
-
-    [AvaloniaFact]
-    public async Task Rejected_keys_ask_for_new_keys_and_retry()
-    {
-        var handler = new FakeHttpHandler
-        {
-            // 앱에 들어 있는 키(test-id)는 거부, 새 키(new-id)는 성공
-            Custom = r => r.Headers.GetValues("X-NCP-APIGW-API-KEY-ID").Single() == "test-id"
-                ? new HttpResponseMessage(System.Net.HttpStatusCode.Unauthorized)
-                {
-                    Content = new StringContent("""{"errorMessage":"NID AUTH Result Invalid (28) : Authentication failed.","errorCode":"024"}"""),
-                }
-                : null,
-        };
-        handler.Responses["https://naverapihub.apigw.ntruss.com/search/v1/webkr"] = Json("""{"items":[{"title":"결과","description":"설명"}]}""");
-        var vm = NewVm();
-        vm.Http = new HttpClient(handler);
-        _dialogs.TextResults.Enqueue("검색어");
-        _dialogs.ConfirmResults.Enqueue(true);      // 새 키를 입력할까요? → 예
-        _dialogs.TextResults.Enqueue("new-id");
-        _dialogs.TextResults.Enqueue("new-secret");
-        _dialogs.ChooseResults.Enqueue(new[] { 0 });
-        await vm.SearchWebCommand.ExecuteAsync(null);
-
-        Assert.Contains("네이버가 API 키를 거부했습니다", _dialogs.Confirms.Single());
-        Assert.Contains("Authentication failed", _dialogs.Confirms.Single());
-        Assert.Equal("결과\n설명", vm.InputText);
-        Assert.Equal(2, handler.Requests.Count); // 거부된 뒤 새 키로 한 번 더
-
-        // 다음부터는 저장한 키를 앱에 들어 있는 키보다 먼저 씀
-        Assert.Equal("new-id", new SettingsStore(SettingsPath).Load().NaverClientId);
-        _dialogs.TextResults.Enqueue("두 번째");
-        _dialogs.ChooseResults.Enqueue(new[] { 0 });
-        await vm.SearchWebCommand.ExecuteAsync(null);
-        Assert.Equal("new-id", handler.Requests.Last().Headers.GetValues("X-NCP-APIGW-API-KEY-ID").Single());
-    }
-
-    [AvaloniaFact]
-    public async Task Gateway_error_format_is_shown()
-    {
-        // 네이버 클라우드 게이트웨이의 오류 모양 {"error":{...}}
-        var handler = new FakeHttpHandler
-        {
-            Custom = _ => new HttpResponseMessage(System.Net.HttpStatusCode.Unauthorized)
-            {
-                Content = new StringContent("""{"error":{"errorCode":"200","message":"Authentication Failed","details":"Invalid authentication information."}}"""),
-            },
-        };
-        var vm = NewVm();
-        vm.Http = new HttpClient(handler);
-        _dialogs.TextResults.Enqueue("검색어");
-        await vm.SearchWebCommand.ExecuteAsync(null);
-        var confirm = _dialogs.Confirms.Single();
-        Assert.Contains("NAVER API HUB", confirm);
-        Assert.Contains("200 / Authentication Failed / Invalid authentication information.", confirm);
-    }
-
-    [AvaloniaFact]
-    public async Task Forbidden_and_network_errors_are_explained()
-    {
-        var handler = new FakeHttpHandler { Custom = _ => new HttpResponseMessage(System.Net.HttpStatusCode.Forbidden) };
-        var vm = NewVm();
-        vm.Http = new HttpClient(handler);
-        _dialogs.TextResults.Enqueue("검색어");
-        await vm.SearchWebCommand.ExecuteAsync(null); // 새 키 입력은 "아니요"
-        Assert.Contains("이미지 검색", _dialogs.Confirms.Single()); // 어떤 API 를 골라야 하는지 안내
-
-        handler.Custom = _ => throw new HttpRequestException("network down");
-        _dialogs.TextResults.Enqueue("검색어");
-        await vm.SearchWebCommand.ExecuteAsync(null);
-        Assert.Contains("네이버 검색에 실패했습니다", _dialogs.Messages.Last().Message);
     }
 
     // ---- 사용자 테마 -----------------------------------------------------------------
