@@ -1,0 +1,7 @@
+# .NET build output
+bin/
+obj/
+publish/
+*.user
+.vs/
+TestResults/
