@@ -44,7 +44,8 @@ public partial class MainViewModel : ViewModelBase
     private DispatcherTimer? _animationTimer;
     private DispatcherTimer? _feedbackTimer;
 
-    public static string Version { get; } = FormatVersion(Assembly.GetExecutingAssembly().GetName().Version);
+    /// <summary>앱 버전 (예: 9.1.0, 베타는 9.1.0-beta). csproj 의 Version 이 그대로 들어감</summary>
+    public static string Version { get; } = ReadVersion();
 
     public MainViewModel() : this(new SettingsStore(), Application.Current)
     {
@@ -400,5 +401,20 @@ public partial class MainViewModel : ViewModelBase
         _store.Save(_settings);
     }
 
-    private static string FormatVersion(Version? v) => v == null ? "?" : $"{v.Major}.{v.Minor}.{v.Build}";
+    /// <summary>
+    /// 정보 버전(9.1.0-beta)을 읽음. 어셈블리 버전은 숫자만 담아서 베타 이름이 빠지기 때문에,
+    /// 베타를 쓰는 사람에게 정식 버전을 알리려면 정보 버전을 써야 함.
+    /// </summary>
+    private static string ReadVersion()
+    {
+        var assembly = Assembly.GetExecutingAssembly();
+        var info = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+        if (!string.IsNullOrWhiteSpace(info))
+        {
+            int plus = info.IndexOf('+'); // 빌드 정보(+커밋번호)는 뺌
+            return plus >= 0 ? info[..plus] : info;
+        }
+        var v = assembly.GetName().Version;
+        return v == null ? "?" : $"{v.Major}.{v.Minor}.{v.Build}";
+    }
 }

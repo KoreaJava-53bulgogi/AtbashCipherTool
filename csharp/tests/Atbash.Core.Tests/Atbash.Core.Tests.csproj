@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Atbash.Core\Atbash.Core.csproj" />
+    <ProjectReference Include="..\..\tools\ReleaseTool\ReleaseTool.csproj" />
   </ItemGroup>
 
   <ItemGroup>

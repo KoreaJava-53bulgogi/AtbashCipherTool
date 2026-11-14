@@ -3,10 +3,11 @@ using System.Text.RegularExpressions;
 namespace Atbash.Core.Updates;
 
 /// <summary>
-/// 인터넷에 올려둔 version.json 의 내용 (Java UpdateChecker 와 같은 형식).
+/// 한 플랫폼이 받을 업데이트 정보. version.json 에서 읽음 (UpdateManifest 참고).
+/// Parse 는 예전 앱(Java 8.x, C# 9.0.0)이 읽던 방식 그대로 맨 처음 나오는 값을 읽음:
 /// { "version", "url", "installer", "sha256", "notes" }
 /// </summary>
-public sealed record UpdateInfo(string Version, string DownloadUrl, string? InstallerUrl, string? Sha256, string Notes)
+public sealed record UpdateInfo(string Version, string DownloadUrl, string? InstallerUrl, string? Sha256, string Notes, string? Tag = null)
 {
     public const string DefaultDownloadUrl =
         "https://github.com/KoreaJava-53bulgogi/AtbashCipherTool/releases/latest";
@@ -39,19 +40,52 @@ public sealed record UpdateInfo(string Version, string DownloadUrl, string? Inst
         return m.Success ? m.Groups[1].Value : null;
     }
 
-    /// <summary>버전을 숫자 단위로 비교 ("8.0.10" &gt; "8.0.9"). a 가 새 버전이면 양수</summary>
+    /// <summary>
+    /// 버전을 숫자 단위로 비교 ("8.0.10" &gt; "8.0.9"). a 가 새 버전이면 양수.
+    /// 베타(9.1.0-beta)는 같은 숫자의 정식(9.1.0)보다 낮은 버전이고, 베타끼리는 이름·숫자 순서로 비교함
+    /// (그래서 베타를 쓰는 사람에게 정식 버전이 나왔다고 알릴 수 있음).
+    /// </summary>
     public static int CompareVersions(string a, string b)
     {
-        var pa = a.Split('.', '-');
-        var pb = b.Split('.', '-');
-        int n = Math.Max(pa.Length, pb.Length);
+        var (na, pa) = SplitVersion(a);
+        var (nb, pb) = SplitVersion(b);
+        int n = Math.Max(na.Length, nb.Length);
         for (int i = 0; i < n; i++)
         {
-            int x = i < pa.Length ? ToInt(pa[i]) : 0;
-            int y = i < pb.Length ? ToInt(pb[i]) : 0;
+            int x = i < na.Length ? na[i] : 0;
+            int y = i < nb.Length ? nb[i] : 0;
             if (x != y) return x.CompareTo(y);
         }
-        return 0;
+        if (pa == null && pb == null) return 0;
+        if (pa == null) return 1;   // 정식 > 베타
+        if (pb == null) return -1;
+        return ComparePreRelease(pa, pb);
+    }
+
+    private static (int[] Numbers, string? PreRelease) SplitVersion(string version)
+    {
+        var v = version.Trim().TrimStart('v', 'V');
+        int dash = v.IndexOf('-');
+        var core = dash < 0 ? v : v[..dash];
+        var pre = dash < 0 ? null : v[(dash + 1)..];
+        return (core.Split('.').Select(ToInt).ToArray(), string.IsNullOrEmpty(pre) ? null : pre);
+    }
+
+    private static int ComparePreRelease(string a, string b)
+    {
+        var ia = a.Split('.');
+        var ib = b.Split('.');
+        for (int i = 0; i < Math.Min(ia.Length, ib.Length); i++)
+        {
+            bool numA = long.TryParse(ia[i], out long x);
+            bool numB = long.TryParse(ib[i], out long y);
+            int c = numA && numB ? x.CompareTo(y)
+                : numA ? -1            // 숫자 이름이 글자 이름보다 낮음
+                : numB ? 1
+                : string.CompareOrdinal(ia[i], ib[i]);
+            if (c != 0) return c;
+        }
+        return ia.Length.CompareTo(ib.Length); // 이름이 더 긴 쪽이 높음 (beta < beta.2)
     }
 
     private static int ToInt(string s)

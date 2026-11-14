@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    version.json 을 만들고 고치는 배포용 명령줄 도구 (csharp\release.bat 과 앞으로의 GitHub Actions 가 씀).
+    앱이 version.json 을 읽는 코드(Atbash.Core 의 UpdateManifest)를 그대로 써서 읽는 쪽과 쓰는 쪽이 어긋나지 않음.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Atbash.ReleaseTool</RootNamespace>
+    <AssemblyName>ReleaseTool</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Atbash.Core\Atbash.Core.csproj" />
+  </ItemGroup>
+
+</Project>

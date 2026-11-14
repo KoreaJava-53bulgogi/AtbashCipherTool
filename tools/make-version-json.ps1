@@ -1,3 +1,8 @@
+# WARNING: this script is only for the old Java 8.x line. It rewrites the WHOLE version.json
+# and therefore deletes the "platforms" section (macOS / Linux / per-platform entries).
+# For anything newer use:  dotnet run --project csharp\tools\ReleaseTool -- merge ...
+# (see csharp\RELEASING.md)
+#
 # Writes version.json for the app's update check / auto-update.
 # Called by release.bat after the installer is built (and signed).
 #

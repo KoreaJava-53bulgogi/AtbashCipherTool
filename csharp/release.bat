@@ -73,8 +73,11 @@ if errorlevel 1 ( echo [ERROR] zip failed. & goto :error )
 echo.
 
 echo [5/5] Updating version.json...
-rem Push version.json to GitHub only AFTER the installer is uploaded to the v%APPVERSION% release.
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0..\tools\make-version-json.ps1" -Version "%APPVERSION%" -Installer "%~dp0installer\Output\%SETUPNAME%.exe" -Out "%~dp0..\version.json"
+rem Only the win-x64 entry is changed (macOS / Linux entries stay as they are).
+rem The GitHub tag for Windows is the plain version, for example 9.1.0 (see csharp\RELEASING.md).
+rem Push version.json to GitHub only AFTER the installer is uploaded to that release.
+rem (do not add --nologo here: dotnet run would hand it to the tool as its first argument)
+"%DOTNET%" run --project tools\ReleaseTool -c Release -v q -- merge --manifest "%~dp0..\version.json" --platform win-x64 --version "%APPVERSION%" --file "%~dp0installer\Output\%SETUPNAME%.exe"
 if errorlevel 1 ( echo [ERROR] version.json update failed. & goto :error )
 echo.
 
@@ -82,7 +85,7 @@ echo ==================================================
 echo  DONE! Version %APPVERSION%
 echo  csharp\installer\Output\%SETUPNAME%.exe
 echo  csharp\installer\Output\%SETUPNAME%.zip
-echo  version.json (updated - push it after uploading the installer)
+echo  version.json (updated - push it after uploading the installer; see the tag name above)
 if not defined SIGN_PFX echo  (not code-signed: SIGN_PFX is not set)
 echo ==================================================
 goto :end

@@ -179,20 +179,22 @@ public class AesTests
     }
 }
 
-/// <summary>Java 버전 클래스(target/classes)로 AesVerify 를 실행하는 도우미</summary>
+/// <summary>Java 버전 클래스(target/classes)를 쓰는 확인용 클래스(tools/golden 의 AesVerify, VersionJsonVerify 등)를 실행하는 도우미</summary>
 internal sealed class JavaInterop
 {
     private readonly string _java;
     private readonly string _classpath;
+    private readonly string _toolClass;
 
-    private JavaInterop(string java, string classpath)
+    private JavaInterop(string java, string classpath, string toolClass)
     {
         _java = java;
         _classpath = classpath;
+        _toolClass = toolClass;
     }
 
-    /// <summary>Java, 컴파일된 Java 클래스, AesVerify 가 없으면 테스트를 건너뜀</summary>
-    public static JavaInterop RequireOrSkip()
+    /// <summary>Java, 컴파일된 Java 클래스, 확인용 클래스(기본 AesVerify)를 쓸 수 없으면 테스트를 건너뜀</summary>
+    public static JavaInterop RequireOrSkip(string toolClass = "AesVerify")
     {
         var root = FindRepoRoot();
         if (root == null) Assert.Skip("repo root (pom.xml) not found");
@@ -203,18 +205,18 @@ internal sealed class JavaInterop
 
         var java = FindJdkTool("java");
         if (java == null) Assert.Skip("java not found");
-        if (!File.Exists(Path.Combine(tools, "AesVerify.class")))
+        if (!File.Exists(Path.Combine(tools, toolClass + ".class")))
         {
             var javac = FindJdkTool("javac");
             if (javac == null) Assert.Skip("javac not found");
             Exec(javac, "-encoding", "UTF-8", "-cp", classes, "-d", tools,
-                Path.Combine(root, "csharp", "tools", "golden", "AesVerify.java"));
+                Path.Combine(root, "csharp", "tools", "golden", toolClass + ".java"));
         }
-        return new JavaInterop(java, classes + Path.PathSeparator + tools);
+        return new JavaInterop(java, classes + Path.PathSeparator + tools, toolClass);
     }
 
     public string Run(params string[] args) =>
-        Exec(_java, new[] { "-cp", _classpath, "AesVerify" }.Concat(args).ToArray()).Trim();
+        Exec(_java, new[] { "-cp", _classpath, _toolClass }.Concat(args).ToArray()).Trim();
 
     private static string Exec(string exe, params string[] args)
     {
@@ -227,7 +229,7 @@ internal sealed class JavaInterop
         return stdout.Length > 0 ? stdout : stderr;
     }
 
-    private static string? FindRepoRoot()
+    internal static string? FindRepoRoot()
     {
         for (var dir = new DirectoryInfo(AppContext.BaseDirectory); dir != null; dir = dir.Parent)
             if (File.Exists(Path.Combine(dir.FullName, "pom.xml"))) return dir.FullName;

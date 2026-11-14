@@ -25,6 +25,9 @@ public partial class MainViewModel
     /// <summary>앱 종료 (창 쪽에서 넣어 줌)</summary>
     public Action? RequestShutdown { get; set; }
 
+    /// <summary>지금 실행 중인 플랫폼. version.json 에서 이 플랫폼의 항목을 읽음 (테스트에서 바꿈)</summary>
+    public PlatformInfo Platform { get; set; } = PlatformInfo.Current;
+
     /// <summary>도움말 → 업데이트 확인: 결과를 항상 알려줌</summary>
     [RelayCommand]
     private Task CheckForUpdatesAsync() => CheckUpdatesAsync(manual: true);
@@ -38,10 +41,10 @@ public partial class MainViewModel
         long now = Now().ToUnixTimeMilliseconds();
         if (!manual && now - _settings.LastUpdateCheck < (long)CheckInterval.TotalMilliseconds) return;
 
-        UpdateInfo info;
+        UpdateInfo? found;
         try
         {
-            info = await new UpdateDownloader(Http).FetchLatestAsync();
+            found = await new UpdateDownloader(Http).FetchLatestAsync(Platform);
         }
         catch (Exception e)
         {
@@ -53,6 +56,14 @@ public partial class MainViewModel
         // 확인 기록은 "설정 저장"과 상관없이 저장 (Java 와 같음)
         _settings.LastUpdateCheck = now;
         _store.Save(_settings);
+
+        // 이 플랫폼의 항목이 version.json 에 아직 없으면 알릴 새 버전이 없는 것으로 봄
+        if (found is not { } info)
+        {
+            if (manual)
+                await Dialogs.ShowMessageAsync(L["CHECK_UPDATE_MENU"], L["UPDATE_LATEST_MESSAGE"].Replace("{0}", Version));
+            return;
+        }
 
         bool newer = UpdateInfo.CompareVersions(info.Version, Version) > 0;
         bool skipped = info.Version == _settings.SkippedVersion;
@@ -69,7 +80,10 @@ public partial class MainViewModel
         var download = L["UPDATE_DOWNLOAD"];
         var later = L["UPDATE_LATER"];
         var skip = L["UPDATE_SKIP"];
-        var buttons = info.CanAutoInstall ? new[] { install, download, later, skip } : new[] { download, later, skip };
+        // 설치 파일 주소와 지문이 있어도, 자동 설치는 지원하는 플랫폼(Windows)에서만 제안함.
+        // macOS·Linux 는 다운로드 페이지를 열어 직접 받음.
+        bool autoInstall = info.CanAutoInstall && Platform.SupportsAutoInstall;
+        var buttons = autoInstall ? new[] { install, download, later, skip } : new[] { download, later, skip };
         var picked = buttons[await Dialogs.ShowOptionsAsync(L["UPDATE_AVAILABLE_TITLE"], message, MessageKind.Info, buttons)];
 
         if (picked == install) await InstallUpdateAsync(info);

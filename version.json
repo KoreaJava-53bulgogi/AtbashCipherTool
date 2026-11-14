@@ -1,7 +1,17 @@
 {
   "version": "9.0.0",
-  "url": "https://github.com/KoreaJava-53bulgogi/AtbashCipherTool/releases/latest",
+  "url": "https://github.com/KoreaJava-53bulgogi/AtbashCipherTool/releases/tag/v9.0.0",
   "installer": "https://github.com/KoreaJava-53bulgogi/AtbashCipherTool/releases/download/v9.0.0/Setup_9.0.0.exe",
   "sha256": "52329f5387dae3153f7e01e22764fad02741b6c7b5e3a21c19357c4155b5e258",
-  "notes": "C#으로 새로 만들었습니다. 더 빠르고 가벼워졌고, Java 설치 없이 실행됩니다. 기존 설정과 사용자 테마는 그대로 옮겨집니다."
+  "notes": "C#으로 새로 만들었습니다. 더 빠르고 가벼워졌고, Java 설치 없이 실행됩니다. 기존 설정과 사용자 테마는 그대로 옮겨집니다.",
+  "platforms": {
+    "win-x64": {
+      "version": "9.0.0",
+      "tag": "v9.0.0",
+      "url": "https://github.com/KoreaJava-53bulgogi/AtbashCipherTool/releases/tag/v9.0.0",
+      "installer": "https://github.com/KoreaJava-53bulgogi/AtbashCipherTool/releases/download/v9.0.0/Setup_9.0.0.exe",
+      "sha256": "52329f5387dae3153f7e01e22764fad02741b6c7b5e3a21c19357c4155b5e258",
+      "notes": "C#으로 새로 만들었습니다. 더 빠르고 가벼워졌고, Java 설치 없이 실행됩니다. 기존 설정과 사용자 테마는 그대로 옮겨집니다."
+    }
+  }
 }

@@ -26,8 +26,11 @@ public sealed class UpdateDownloader
 
     public static string CurrentVersionUrl => IsTestMode ? Environment.GetEnvironmentVariable(TestUrlEnv)!.Trim() : VersionUrl;
 
-    /// <summary>최신 버전 정보 가져오기</summary>
-    public async Task<UpdateInfo> FetchLatestAsync(CancellationToken cancel = default)
+    /// <summary>
+    /// 최신 버전 정보 가져오기. version.json 에서 그 플랫폼(기본: 지금 실행 중인 플랫폼)의 항목을 읽음.
+    /// 그 플랫폼의 항목이 아직 없으면 null (알릴 새 버전 없음).
+    /// </summary>
+    public async Task<UpdateInfo?> FetchLatestAsync(PlatformInfo? platform = null, CancellationToken cancel = default)
     {
         var url = CurrentVersionUrl;
         string json;
@@ -43,7 +46,7 @@ public sealed class UpdateDownloader
             if (!response.IsSuccessStatusCode) throw new HttpRequestException("HTTP " + (int)response.StatusCode);
             json = await response.Content.ReadAsStringAsync(cancel);
         }
-        return UpdateInfo.Parse(json);
+        return UpdateManifest.Parse(json).Select(platform ?? PlatformInfo.Current);
     }
 
     /// <summary>

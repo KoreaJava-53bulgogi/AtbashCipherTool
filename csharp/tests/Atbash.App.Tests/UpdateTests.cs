@@ -50,6 +50,104 @@ public class UpdateTests : IDisposable
         return bytes;
     }
 
+    // ---- 플랫폼별 version.json (태그 구조) -----------------------------------------------------
+
+    /// <summary>Windows(맨 위 항목) + Mac/Linux 항목이 함께 든 version.json 을 만듦. Windows 는 앱 자신의 버전과 같게(= 최신)</summary>
+    private (string MacTagPage, string MacInstaller) PublishMultiPlatform(string windowsVersion, string macVersion = "99.0.0", string linuxVersion = "98.0.0")
+    {
+        var mac = new PlatformEntry(macVersion, "a_" + macVersion, null,
+            new Uri(Path.Combine(_dir, "App.dmg")).AbsoluteUri, new string('a', 64), "맥 안내");
+        var linux = new PlatformEntry(linuxVersion, "l_" + linuxVersion, null,
+            new Uri(Path.Combine(_dir, "App.AppImage")).AbsoluteUri, new string('b', 64), "리눅스 안내");
+        var windows = new PlatformEntry(windowsVersion, windowsVersion, null,
+            new Uri(Path.Combine(_dir, $"Setup_{windowsVersion}.exe")).AbsoluteUri, new string('c', 64), "윈도우 안내");
+        var json = UpdateManifest.Empty.With(PlatformInfo.WindowsX64, windows)
+            .With(PlatformInfo.MacArm64, mac).With(PlatformInfo.LinuxX64, linux).ToJson();
+        File.WriteAllText(Path.Combine(_dir, "version.json"), json);
+        return (ReleaseTags.TagPage("a_" + macVersion), mac.Installer!);
+    }
+
+    [AvaloniaFact]
+    public async Task Mac_app_reads_its_own_entry_and_only_offers_the_download_page()
+    {
+        var (macPage, _) = PublishMultiPlatform(windowsVersion: MainViewModel.Version);
+        var vm = NewVm();
+        vm.Platform = PlatformInfo.MacArm64;
+        _dialogs.OptionResults.Enqueue(0); // 첫 버튼 = [다운로드 페이지 열기]
+        await vm.CheckForUpdatesCommand.ExecuteAsync(null);
+
+        var (message, buttons) = _dialogs.Options.Single();
+        Assert.Contains("새 버전 99.0.0", message);
+        Assert.Contains("맥 안내", message);
+        // 설치 파일 주소와 지문이 있어도 macOS 에서는 [지금 업데이트]를 제안하지 않음
+        Assert.Equal(new[] { "다운로드 페이지 열기", "나중에", "이 버전 건너뛰기" }, buttons);
+        Assert.Equal(macPage, _dialogs.OpenedUrls.Single());   // 그 태그(a_99.0.0)의 릴리스 페이지
+        Assert.Empty(_launched);
+        Assert.Equal(0, _shutdowns);
+    }
+
+    [AvaloniaFact]
+    public async Task Linux_app_reads_the_linux_entry()
+    {
+        PublishMultiPlatform(windowsVersion: MainViewModel.Version);
+        var vm = NewVm();
+        vm.Platform = PlatformInfo.LinuxX64;
+        _dialogs.OptionResults.Enqueue(0);
+        await vm.CheckForUpdatesCommand.ExecuteAsync(null);
+        Assert.Contains("새 버전 98.0.0", _dialogs.Options.Single().Message);
+        Assert.Equal(ReleaseTags.TagPage("l_98.0.0"), _dialogs.OpenedUrls.Single());
+    }
+
+    [AvaloniaFact]
+    public async Task Windows_app_ignores_newer_mac_and_linux_versions()
+    {
+        PublishMultiPlatform(windowsVersion: MainViewModel.Version); // Windows 는 최신, Mac/Linux 는 훨씬 새 버전
+        var vm = NewVm();
+        vm.Platform = PlatformInfo.WindowsX64;
+        await vm.CheckForUpdatesCommand.ExecuteAsync(null);
+        Assert.Empty(_dialogs.Options);
+        Assert.Equal($"최신 버전({MainViewModel.Version})을 사용하고 있습니다.", _dialogs.Messages.Single().Message);
+    }
+
+    [AvaloniaFact]
+    public async Task Platform_without_an_entry_is_treated_as_up_to_date()
+    {
+        Publish("9.9.9", withInstaller: true); // 예전 형식: Windows 항목만 있음
+        var vm = NewVm();
+        vm.Platform = PlatformInfo.MacArm64;
+        await vm.AutoCheckForUpdatesAsync();                       // 자동 확인: 조용히
+        Assert.Empty(_dialogs.Options);
+        Assert.Empty(_dialogs.Messages);
+
+        await vm.CheckForUpdatesCommand.ExecuteAsync(null);        // 직접 확인: "최신 버전" 안내
+        Assert.Empty(_dialogs.Options);
+        Assert.Contains("최신 버전", _dialogs.Messages.Single().Message);
+    }
+
+    [AvaloniaFact]
+    public async Task Windows_still_updates_automatically_from_a_multi_platform_file()
+    {
+        var installer = Path.Combine(_dir, "Setup_9.9.9.exe");
+        var bytes = new byte[100_000];
+        new Random(2).NextBytes(bytes);
+        File.WriteAllBytes(installer, bytes);
+        var windows = new PlatformEntry("9.9.9", "9.9.9", null, new Uri(installer).AbsoluteUri, UpdateDownloader.Sha256(installer), "윈도우");
+        File.WriteAllText(Path.Combine(_dir, "version.json"), UpdateManifest.Empty
+            .With(PlatformInfo.WindowsX64, windows)
+            .With(PlatformInfo.MacArm64, new PlatformEntry("99.0.0", "a_99.0.0", null, null, null, "맥")).ToJson());
+
+        var vm = NewVm();
+        vm.Platform = PlatformInfo.WindowsX64;
+        _dialogs.OptionResults.Enqueue(0); // [지금 업데이트]
+        _dialogs.OptionResults.Enqueue(0); // [확인]
+        await vm.CheckForUpdatesCommand.ExecuteAsync(null);
+
+        Assert.Contains("지금 업데이트", _dialogs.Options[0].Buttons);
+        Assert.Equal(bytes, File.ReadAllBytes(Assert.Single(_launched)));
+        Assert.Equal(1, _shutdowns);
+        Directory.Delete(Path.GetDirectoryName(_launched[0])!, true);
+    }
+
     [AvaloniaFact]
     public async Task Update_now_downloads_verifies_runs_the_installer_and_quits()
     {

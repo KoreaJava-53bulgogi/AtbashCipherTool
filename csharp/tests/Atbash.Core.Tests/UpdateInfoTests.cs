@@ -10,7 +10,7 @@ public class UpdateInfoTests
     [InlineData("8.0", "8.0.0", 0)]
     [InlineData("7.1.0", "8.0.0", -1)]
     [InlineData("9.0.0", "8.1.0", 1)]
-    [InlineData("9.0.0-beta", "9.0.0", 0)]
+    [InlineData("9.0.0-beta", "9.0.0", -1)] // 베타는 같은 숫자의 정식보다 낮음 (9.1.0 에서 바뀜)
     public void Compares_versions_numerically(string a, string b, int expectedSign) =>
         Assert.Equal(expectedSign, Math.Sign(UpdateInfo.CompareVersions(a, b)));
 
