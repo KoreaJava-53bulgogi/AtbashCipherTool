@@ -80,8 +80,19 @@ public class PlatformTests
 
     // ---- Linux: 시스템 tesseract 명령 ------------------------------------------------------
 
-    private static byte[] SmallPng() =>
-        TextImageExporter.RenderPng("A", Avalonia.Media.Colors.White, Avalonia.Media.Colors.Black, fontSize: 20);
+    /// <summary>
+    /// 흰 바탕에 검은 사각형이 있는 작은 PNG. 화면 라이브러리(Avalonia) 없이 SkiaSharp 로 직접 그림
+    /// (일반 [Fact] 테스트는 Avalonia 가 준비되지 않은 상태에서 실행될 수 있음 → macOS CI 에서 가끔 실패했음)
+    /// </summary>
+    private static byte[] SmallPng()
+    {
+        using var surface = SkiaSharp.SKSurface.Create(new SkiaSharp.SKImageInfo(60, 30));
+        surface.Canvas.Clear(SkiaSharp.SKColors.White);
+        using var paint = new SkiaSharp.SKPaint { Color = SkiaSharp.SKColors.Black };
+        surface.Canvas.DrawRect(20, 8, 20, 14, paint);
+        using var image = surface.Snapshot();
+        return image.Encode(SkiaSharp.SKEncodedImageFormat.Png, 100).ToArray();
+    }
 
     [AvaloniaFact]
     public async Task Missing_tesseract_shows_how_to_install_it()
