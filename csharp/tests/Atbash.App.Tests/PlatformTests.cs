@@ -64,12 +64,103 @@ public class PlatformTests
     [InlineData("win", Architecture.X86, true)]
     [InlineData("win", Architecture.Arm64, false)] // Tesseract 패키지에 ARM64 용 엔진이 없음
     [InlineData("osx", Architecture.Arm64, false)] // D단계: Apple Vision
-    [InlineData("linux", Architecture.X64, false)] // C단계: 시스템 Tesseract
     public void Picks_an_ocr_engine_per_os(string os, Architecture arch, bool supported)
     {
         var engine = OcrService.For(os, arch);
         Assert.Equal(supported, engine.IsSupported);
         Assert.Equal(supported ? typeof(TesseractOcrEngine) : typeof(UnsupportedOcrEngine), engine.GetType());
+    }
+
+    [Fact]
+    public void Linux_uses_the_system_tesseract_command()
+    {
+        Assert.Same(TesseractCliOcrEngine.System, OcrService.For("linux", Architecture.X64));
+        Assert.True(OcrService.For("linux", Architecture.Arm64).IsSupported);
+    }
+
+    // ---- Linux: 시스템 tesseract 명령 ------------------------------------------------------
+
+    private static byte[] SmallPng() =>
+        TextImageExporter.RenderPng("A", Avalonia.Media.Colors.White, Avalonia.Media.Colors.Black, fontSize: 20);
+
+    [AvaloniaFact]
+    public async Task Missing_tesseract_shows_how_to_install_it()
+    {
+        var dir = Directory.CreateTempSubdirectory("atbash-platform-").FullName;
+        try
+        {
+            var dialogs = new FakeDialogs();
+            var vm = new MainViewModel(new SettingsStore(Path.Combine(dir, "settings.json")), Application.Current)
+            {
+                Dialogs = dialogs,
+                Ocr = new TesseractCliOcrEngine(() => null, OcrService.DataPath),
+            };
+            Assert.False(vm.Ocr.IsAvailable(out var reason));
+            Assert.Contains("tesseract", reason);
+
+            File.WriteAllBytes(Path.Combine(dir, "a.png"), SmallPng());
+            dialogs.OpenResults.Enqueue(new[] { Path.Combine(dir, "a.png") });
+            await vm.OcrFromFileCommand.ExecuteAsync(null);
+
+            var m = Assert.Single(dialogs.Messages);
+            Assert.Equal(MessageKind.Info, m.Kind); // 오류가 아니라 안내
+            Assert.Contains("sudo apt install tesseract-ocr", m.Message);
+            Assert.False(vm.IsBusy);
+        }
+        finally
+        {
+            Directory.Delete(dir, true);
+        }
+    }
+
+    /// <summary>가짜 tesseract (셸 스크립트): 받은 인자를 그대로 출력. 셸 스크립트를 실행할 수 있는 macOS·Linux 에서만</summary>
+    private static string FakeTesseract(string dir, string body)
+    {
+        var path = Path.Combine(dir, "tesseract");
+        File.WriteAllText(path, "#!/bin/sh\n" + body + "\n");
+        File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+        return path;
+    }
+
+    [Fact]
+    public void Runs_tesseract_with_the_bundled_language_data()
+    {
+        if (OperatingSystem.IsWindows()) Assert.Skip("shell script fake needs macOS/Linux");
+        var dir = Directory.CreateTempSubdirectory("atbash-fake-tess-").FullName;
+        try
+        {
+            // 인자를 한 줄에 하나씩 출력하고, 입력 그림이 실제로 있는지도 확인
+            var exe = FakeTesseract(dir, "for a in \"$@\"; do echo \"$a\"; done\n[ -f \"$1\" ] && echo 'input exists'\necho '안녕 OCR'");
+            var engine = new TesseractCliOcrEngine(() => exe, "/data/tess");
+            var lines = engine.Recognize(SmallPng()).Split('\n');
+
+            Assert.EndsWith(".png", lines[0]);
+            Assert.Equal(new[] { "stdout", "--tessdata-dir", "/data/tess", "-l", "kor+eng" }, lines[1..6]);
+            Assert.Equal("input exists", lines[6]);
+            Assert.Equal("안녕 OCR", lines[7]); // 한글 출력(UTF-8)이 깨지지 않음
+            Assert.False(File.Exists(lines[0]));  // 임시 그림은 지움
+        }
+        finally
+        {
+            Directory.Delete(dir, true);
+        }
+    }
+
+    [Fact]
+    public void Tesseract_failure_is_reported_with_its_message()
+    {
+        if (OperatingSystem.IsWindows()) Assert.Skip("shell script fake needs macOS/Linux");
+        var dir = Directory.CreateTempSubdirectory("atbash-fake-tess-").FullName;
+        try
+        {
+            var exe = FakeTesseract(dir, "echo 'Failed loading language kor' >&2\nexit 1");
+            var e = Assert.Throws<InvalidOperationException>(() => new TesseractCliOcrEngine(() => exe, dir).Recognize(SmallPng()));
+            Assert.Contains("Failed loading language kor", e.Message);
+        }
+        finally
+        {
+            Directory.Delete(dir, true);
+        }
     }
 
     [Fact]
@@ -143,5 +234,6 @@ public class PlatformTests
         Assert.Contains("Control+Shift+Command+4", strings["CLIPBOARD_NO_IMAGE_MESSAGE_MAC"]);
         Assert.Contains("PrtSc", strings["CLIPBOARD_NO_IMAGE_MESSAGE_LINUX"]);
         Assert.Contains("OCR", strings["OCR_UNSUPPORTED_MESSAGE"]);
+        Assert.Contains("sudo apt install tesseract-ocr", strings["OCR_LINUX_INSTALL_MESSAGE"]);
     }
 }

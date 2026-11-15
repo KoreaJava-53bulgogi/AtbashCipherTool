@@ -40,3 +40,4 @@ bin/
 test-results/
 snapshots/
 publish/
+csharp/packaging/linux/out/

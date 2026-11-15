@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Atbash Cipher Tool
+Name[ko]=아트배쉬 암호화/복호화 툴
+Comment=Encrypt and decrypt text with classic ciphers and AES
+Comment[ko]=고전 암호와 AES로 글을 암호화·복호화합니다
+Exec=AtbashCipherTool %F
+Icon=atbash-cipher-tool
+Terminal=false
+Categories=Utility;
+StartupWMClass=AtbashCipherTool

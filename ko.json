@@ -122,6 +122,7 @@
   "CLIPBOARD_NO_IMAGE_MESSAGE": "클립보드에 이미지가 없습니다.\n화면을 캡처(Win+Shift+S)하거나 이미지를 복사한 뒤 다시 시도하세요.",
   "CLIPBOARD_NO_IMAGE_MESSAGE_MAC": "클립보드에 이미지가 없습니다.\n화면을 캡처(Control+Shift+Command+4)하거나 이미지를 복사한 뒤 다시 시도하세요.",
   "CLIPBOARD_NO_IMAGE_MESSAGE_LINUX": "클립보드에 이미지가 없습니다.\n화면을 캡처(PrtSc)하거나 이미지를 복사한 뒤 다시 시도하세요.",
+  "OCR_LINUX_INSTALL_MESSAGE": "이미지에서 글자를 읽으려면 Tesseract가 필요합니다.\n터미널에서 설치한 뒤 다시 시도하세요.\n\nUbuntu·Debian: sudo apt install tesseract-ocr\nFedora: sudo dnf install tesseract\nArch: sudo pacman -S tesseract",
   "OCR_UNSUPPORTED_MESSAGE": "이 운영체제에서는 아직 이미지에서 글자 읽기(OCR)를 지원하지 않습니다.\n다음 버전에서 추가할 예정입니다.",
   "DROP_ENCRYPT_CONFIRM": "파일 {0}개를 AES로 암호화할까요?",
   "CIPHER_AES_TEXT_ENCRYPT": "AES 텍스트 (암호화)",

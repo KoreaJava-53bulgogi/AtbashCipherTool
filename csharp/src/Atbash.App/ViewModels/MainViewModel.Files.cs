@@ -170,6 +170,12 @@ public partial class MainViewModel
         {
             text = await Task.Run(() => Ocr.Recognize(imageBytes()));
         }
+        catch (OcrSetupRequiredException e)
+        {
+            // 예: Linux 에서 tesseract 가 설치되어 있지 않음 → 오류가 아니라 설치 방법을 안내
+            if (Dialogs != null) await Dialogs.ShowMessageAsync(L["OCR_ERROR_TITLE"], L[e.MessageKey]);
+            return;
+        }
         catch (Exception e)
         {
             await Error(L["OCR_ERROR_TITLE"], L["OCR_ERROR_MESSAGE"] + "\n" + e.Message);

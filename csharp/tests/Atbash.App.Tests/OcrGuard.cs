@@ -5,7 +5,7 @@ namespace Atbash.App.Tests;
 /// <summary>
 /// 실제로 글자를 읽어 보는 OCR 테스트의 출입문.
 /// Windows x64 에서는 OCR 이 반드시 동작해야 하므로 그냥 통과시킴 (고장 나면 테스트가 실패해야 함).
-/// 엔진이 아직 없는 운영체제(계획: macOS Apple Vision, Linux 시스템 Tesseract)에서만 이유를 적고 건너뜀.
+/// Linux 는 시스템 tesseract 가 설치되어 있으면 실행됨 (CI 는 설치함). 엔진이 없거나 설치되지 않은 곳에서만 이유를 적고 건너뜀.
 /// 엔진이 생기면 건너뛰지 않고 저절로 실행됨.
 /// </summary>
 internal static class OcrGuard

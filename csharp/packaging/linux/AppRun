@@ -1,0 +1,4 @@
+#!/bin/sh
+# AppImage 를 실행하면 처음 불리는 파일: 앱 폴더 안의 실행 파일로 넘겨줌
+HERE="$(dirname "$(readlink -f "$0")")"
+exec "$HERE/usr/lib/atbash-cipher-tool/AtbashCipherTool" "$@"

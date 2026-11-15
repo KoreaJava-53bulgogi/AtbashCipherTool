@@ -122,6 +122,7 @@
   "CLIPBOARD_NO_IMAGE_MESSAGE": "There is no image in the clipboard.\nTake a screenshot (Win+Shift+S) or copy an image, then try again.",
   "CLIPBOARD_NO_IMAGE_MESSAGE_MAC": "There is no image in the clipboard.\nTake a screenshot (Control+Shift+Command+4) or copy an image, then try again.",
   "CLIPBOARD_NO_IMAGE_MESSAGE_LINUX": "There is no image in the clipboard.\nTake a screenshot (PrtSc) or copy an image, then try again.",
+  "OCR_LINUX_INSTALL_MESSAGE": "Reading text from images needs Tesseract.\nInstall it in a terminal, then try again.\n\nUbuntu/Debian: sudo apt install tesseract-ocr\nFedora: sudo dnf install tesseract\nArch: sudo pacman -S tesseract",
   "OCR_UNSUPPORTED_MESSAGE": "Reading text from images (OCR) is not supported on this operating system yet.\nIt is planned for a future version.",
   "DROP_ENCRYPT_CONFIRM": "Encrypt {0} file(s) with AES?",
   "CIPHER_AES_TEXT_ENCRYPT": "AES Text (Encrypt)",

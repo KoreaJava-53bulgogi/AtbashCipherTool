@@ -37,10 +37,12 @@ public static class OcrService
     /// 운영체제·CPU 에 맞는 엔진. Tesseract 패키지에는 Windows x86/x64 용 엔진 파일만 들어 있어서
     /// 그 밖의 조합(Windows ARM64 포함)은 아직 "지원하지 않음".
     /// </summary>
-    public static IOcrEngine For(string os, Architecture architecture) =>
-        os == "win" && architecture is Architecture.X64 or Architecture.X86
-            ? TesseractOcrEngine.Instance
-            : UnsupportedOcrEngine.Instance;
+    public static IOcrEngine For(string os, Architecture architecture) => os switch
+    {
+        "win" when architecture is Architecture.X64 or Architecture.X86 => TesseractOcrEngine.Instance,
+        "linux" => TesseractCliOcrEngine.System,
+        _ => UnsupportedOcrEngine.Instance,
+    };
 
     /// <summary>tessdata 폴더 (실행 파일 옆)</summary>
     public static string DataPath => Path.Combine(AppContext.BaseDirectory, "tessdata");
@@ -81,8 +83,7 @@ public sealed class TesseractOcrEngine : IOcrEngine
     /// <exception cref="FileNotFoundException">tessdata 가 없음</exception>
     public string Recognize(byte[] imageBytes)
     {
-        using var original = SKBitmap.Decode(imageBytes) ?? throw new InvalidDataException("Cannot read image.");
-        var prepared = Preprocess(original);
+        var prepared = OcrImage.Prepare(imageBytes);
 
         lock (_lock)
         {
@@ -121,6 +122,17 @@ public sealed class TesseractOcrEngine : IOcrEngine
                 throw new FileNotFoundException("Tesseract data files missing.", lang + ".traineddata");
         }
         return new TesseractEngine(OcrService.DataPath, "kor+eng", EngineMode.Default);
+    }
+}
+
+/// <summary>OCR 전에 이미지를 다듬음 (모든 Tesseract 엔진이 같이 씀)</summary>
+internal static class OcrImage
+{
+    /// <exception cref="InvalidDataException">이미지를 읽을 수 없음</exception>
+    public static byte[] Prepare(byte[] imageBytes)
+    {
+        using var original = SKBitmap.Decode(imageBytes) ?? throw new InvalidDataException("Cannot read image.");
+        return Preprocess(original);
     }
 
     /// <summary>흑백 + 2배 확대 (Java 버전과 같은 전처리) 후 PNG 로</summary>

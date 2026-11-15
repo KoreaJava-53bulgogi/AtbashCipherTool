@@ -1,3 +1,8 @@
 # cmd.exe misreads .bat files without CRLF line endings
 *.bat text eol=crlf
 *.iss text eol=crlf
+
+# Shell scripts and Linux packaging files must keep LF line endings
+*.sh text eol=lf
+csharp/packaging/linux/AppRun text eol=lf
+*.desktop text eol=lf
