@@ -152,7 +152,7 @@ public class JavaMigrationTests : IDisposable
     public void Reads_the_real_java_settings_on_this_pc()
     {
         var prefs = new RegistryJavaPrefs().ReadAll();
-        if (prefs == null) Assert.Skip("Java 버전 설정이 없는 PC");
+        if (prefs == null) Assert.Skip("no Java 8.x settings on this PC"); // CI 기록에서 한글이 깨지므로 영어로
         Assert.Contains(prefs!["language"], new[] { "KOREAN", "ENGLISH", "CHINESE", "JAPANESE" });
         var imported = JavaSettingsImporter.Import(prefs);
         Assert.True(imported.MigratedFromJava);

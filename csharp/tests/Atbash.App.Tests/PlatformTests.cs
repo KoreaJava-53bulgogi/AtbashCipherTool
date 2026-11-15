@@ -116,6 +116,7 @@ public class PlatformTests
     /// <summary>가짜 tesseract (셸 스크립트): 받은 인자를 그대로 출력. 셸 스크립트를 실행할 수 있는 macOS·Linux 에서만</summary>
     private static string FakeTesseract(string dir, string body)
     {
+        if (OperatingSystem.IsWindows()) throw new PlatformNotSupportedException();
         var path = Path.Combine(dir, "tesseract");
         File.WriteAllText(path, "#!/bin/sh\n" + body + "\n");
         File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);

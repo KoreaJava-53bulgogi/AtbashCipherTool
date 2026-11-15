@@ -47,10 +47,12 @@ jobs:
           javac -encoding UTF-8 -d target/classes AESFileCipher.java UpdateChecker.java
           ls target/classes
 
-      # Linux 의 OCR 은 시스템 tesseract 명령을 씀 → 설치해서 실제로 글자를 읽는 테스트까지 돌림
-      - name: Install Tesseract (Linux OCR)
+      # Linux 의 OCR 은 시스템 tesseract 명령을 씀 → 설치해서 실제로 글자를 읽는 테스트까지 돌림.
+      # 한글 글꼴(Noto CJK)도 설치: 없으면 테스트가 그리는 그림에 한글이 네모(□)로 나와서 읽을 수가 없음
+      # (일반 Ubuntu·Kubuntu 데스크톱에는 기본으로 들어 있음).
+      - name: Install Tesseract and Korean fonts (Linux)
         if: runner.os == 'Linux'
-        run: sudo apt-get update -q && sudo apt-get install -y -q tesseract-ocr
+        run: sudo apt-get update -q && sudo apt-get install -y -q tesseract-ocr fonts-noto-cjk
 
       - name: Test
         run: dotnet test csharp/AtbashCipher.sln --logger "GitHubActions" --logger trx --results-directory test-results
