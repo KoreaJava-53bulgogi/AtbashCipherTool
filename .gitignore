@@ -37,3 +37,5 @@ bin/
 .classpath
 .settings/
 .factorypath
+test-results/
+snapshots/

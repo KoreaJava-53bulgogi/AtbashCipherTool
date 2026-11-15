@@ -48,12 +48,35 @@ jobs:
           ls target/classes
 
       - name: Test
-        # 건너뛴 테스트도 안내(annotation)로 남겨서, 어느 운영체제에서 무엇을 건너뛰었는지 보이게 함
-        run: dotnet test csharp/AtbashCipher.sln --logger "GitHubActions;annotations.includeSkippedTests=true"
+        run: dotnet test csharp/AtbashCipher.sln --logger "GitHubActions" --logger trx --results-directory test-results
+
+      # 통과·실패·건너뜀 개수와, 건너뛴 테스트가 무엇이고 왜인지를 안내(notice)로 남김.
+      # (어느 운영체제에서 무엇을 건너뛰는지 한눈에 보려는 것 — 건너뜀이 조용히 늘어나는 것을 막음)
+      - name: Test report
+        if: always()
+        shell: pwsh
+        run: |
+          $ns = New-Object System.Xml.XmlNamespaceManager((New-Object System.Xml.NameTable))
+          $ns.AddNamespace('t', 'http://microsoft.com/schemas/VisualStudio/TeamTest/2010')
+          $passed = 0; $failed = 0; $skipped = 0
+          foreach ($file in Get-ChildItem -Recurse -Filter *.trx -Path test-results -ErrorAction SilentlyContinue) {
+            $xml = [xml](Get-Content $file.FullName -Raw)
+            foreach ($r in $xml.SelectNodes('//t:UnitTestResult', $ns)) {
+              if ($r.outcome -eq 'Passed') { $passed++ }
+              elseif ($r.outcome -eq 'Failed') { $failed++ }
+              else {
+                $skipped++
+                $why = $r.SelectSingleNode('t:Output/t:ErrorInfo/t:Message', $ns)
+                $text = if ($why) { ($why.InnerText -replace '\s+', ' ').Trim() } else { '' }
+                Write-Host "::notice title=Skipped on ${{ matrix.os }}::$($r.testName) - $text"
+              }
+            }
+          }
+          Write-Host "::notice title=Totals on ${{ matrix.os }}::passed=$passed failed=$failed skipped=$skipped"
 
       - name: Upload window snapshots
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: snapshots-${{ matrix.os }}
           path: snapshots
