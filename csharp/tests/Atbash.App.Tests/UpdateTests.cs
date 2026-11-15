@@ -26,8 +26,11 @@ public class UpdateTests : IDisposable
         Directory.Delete(_dir, true);
     }
 
+    // 이 파일의 시험은 Windows 앱의 업데이트 흐름(자동 설치 포함)을 확인함. 앱은 "지금 실행 중인 플랫폼"의 항목을 읽으므로
+    // Linux·macOS 에서 돌려도 같은 시험이 되도록 플랫폼을 Windows 로 정해 둠 (다른 플랫폼은 아래 플랫폼별 시험에서 따로 확인).
     private MainViewModel NewVm(long lastCheck = 0) => new(new SettingsStore(Path.Combine(_dir, "settings.json")), Application.Current)
     {
+        Platform = PlatformInfo.WindowsX64,
         Dialogs = _dialogs,
         LaunchInstaller = p => _launched.Add(p),
         RequestShutdown = () => _shutdowns++,
@@ -221,6 +224,7 @@ public class UpdateTests : IDisposable
         long now = 10 * day;
         MainViewModel Vm() => new(store, Application.Current)
         {
+            Platform = PlatformInfo.WindowsX64,
             Dialogs = _dialogs, LaunchInstaller = p => _launched.Add(p), Now = () => DateTimeOffset.FromUnixTimeMilliseconds(now),
         };
 
