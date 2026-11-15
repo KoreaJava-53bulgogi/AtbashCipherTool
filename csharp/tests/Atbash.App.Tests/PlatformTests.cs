@@ -219,6 +219,30 @@ public class PlatformTests
         }
     }
 
+    // ---- Linux 한글 입력기 연결 ---------------------------------------------------------------
+
+    private static string? Choose(Dictionary<string, string> env, params string[] running) =>
+        LinuxInputMethod.Choose(name => env.GetValueOrDefault(name), running.Contains);
+
+    [Fact]
+    public void Kde_plasma_6_with_empty_variables_connects_to_the_running_fcitx5()
+    {
+        // VM 에서 실제로 겪은 상황: 변수는 비어 있고 fcitx5 가 실행 중 → 앱에서만 한글이 안 됐음
+        Assert.Equal("fcitx", Choose(new(), "fcitx5"));
+        Assert.Equal("fcitx", Choose(new() { ["GTK_IM_MODULE"] = "wayland" }, "fcitx5")); // fcitx/ibus 가 아닌 값
+        Assert.Equal("ibus", Choose(new(), "ibus-daemon"));
+        Assert.Equal("fcitx", Choose(new(), "ibus-daemon", "fcitx5")); // 둘 다 있으면 fcitx (KDE 권장)
+    }
+
+    [Fact]
+    public void Existing_settings_and_missing_input_methods_are_left_alone()
+    {
+        Assert.Null(Choose(new() { [LinuxInputMethod.Variable] = "ibus" }, "fcitx5")); // 사용자가 정한 것
+        Assert.Null(Choose(new() { ["XMODIFIERS"] = "@im=fcitx" }, "fcitx5"));       // Avalonia 가 알아서 읽음
+        Assert.Null(Choose(new() { ["QT_IM_MODULE"] = "ibus" }, "ibus-daemon"));
+        Assert.Null(Choose(new()));                                                    // 입력기가 없음
+    }
+
     // ---- 언어 파일 ----------------------------------------------------------------------
 
     [Theory]
