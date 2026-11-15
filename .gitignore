@@ -39,3 +39,4 @@ bin/
 .factorypath
 test-results/
 snapshots/
+publish/

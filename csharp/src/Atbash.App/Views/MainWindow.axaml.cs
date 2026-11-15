@@ -21,11 +21,26 @@ public partial class MainWindow : Window
         AddHandler(DragDrop.DragOverEvent, OnDragOver, RoutingStrategies.Bubble, handledEventsToo: true);
         AddHandler(DragDrop.DropEvent, OnDrop, RoutingStrategies.Bubble, handledEventsToo: true);
 
-        // 입력창에서 Ctrl+V: 이미지만 있으면 OCR, 글자가 있으면 평소처럼 붙여넣기
+        // 입력창에서 Ctrl+V (macOS ⌘V): 이미지만 있으면 OCR, 글자가 있으면 평소처럼 붙여넣기
         InputBox.AddHandler(TextBox.PastingFromClipboardEvent, OnPasting, RoutingStrategies.Bubble);
+
+        // 메뉴에 보이는 단축키 (macOS 는 ⌘)
+        OcrClipboardMenu.InputGesture = Shortcuts.OcrFromClipboard(IsMac);
+        HistoryMenu.InputGesture = Shortcuts.History(IsMac);
     }
 
+    /// <summary>macOS 단축키(⌘)를 쓸지. 테스트에서 바꿀 수 있게 창을 만들기 전에 정함</summary>
+    public static bool IsMac { get; set; } = OperatingSystem.IsMacOS();
+
     private MainViewModel? Vm => DataContext as MainViewModel;
+
+    /// <summary>실제로 눌렀을 때 동작하는 단축키 (명령이 화면 모델에 있으므로 연결될 때 넣음)</summary>
+    private void BindShortcuts(MainViewModel vm)
+    {
+        KeyBindings.Clear();
+        KeyBindings.Add(new KeyBinding { Gesture = Shortcuts.OcrFromClipboard(IsMac), Command = vm.OcrFromClipboardCommand });
+        KeyBindings.Add(new KeyBinding { Gesture = Shortcuts.History(IsMac), Command = vm.ShowHistoryCommand });
+    }
 
     protected override void OnDataContextChanged(EventArgs e)
     {
@@ -35,6 +50,7 @@ public partial class MainWindow : Window
         Height = vm.InitialWindowHeight;
         vm.Dialogs ??= new AvaloniaDialogs(this, () => vm.L);
         vm.Clipboard ??= new AvaloniaClipboard(this);
+        BindShortcuts(vm);
         vm.PropertyChanged += OnViewModelChanged;
     }
 

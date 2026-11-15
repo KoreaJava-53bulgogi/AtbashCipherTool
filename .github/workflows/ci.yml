@@ -74,6 +74,20 @@ jobs:
           }
           Write-Host "::notice title=Totals on ${{ matrix.os }}::passed=$passed failed=$failed skipped=$skipped"
 
+      # 배포용 빌드가 각 운영체제에서 만들어지는지 (설치 파일·.app·AppImage 만들기는 다음 단계)
+      - name: Publish (release build for this OS)
+        shell: bash
+        run: |
+          case "${{ matrix.os }}" in
+            windows-*) rid=win-x64 ;;
+            macos-*)   rid=osx-arm64 ;;
+            *)         rid=linux-x64 ;;
+          esac
+          dotnet publish csharp/src/Atbash.App -c Release -r "$rid" -o "publish/$rid" --nologo
+          ls "publish/$rid" | grep -E '^AtbashCipherTool(\.exe)?$'
+          test -f "publish/$rid/tessdata/kor.traineddata"
+          echo "::notice title=Publish $rid::$(ls "publish/$rid" | wc -l) files, $(du -sh "publish/$rid" | cut -f1)"
+
       - name: Upload window snapshots
         if: always()
         uses: actions/upload-artifact@v6

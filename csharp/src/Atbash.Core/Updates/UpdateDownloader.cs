@@ -127,6 +127,9 @@ public sealed class UpdateDownloader
     /// </summary>
     public static void LaunchInstaller(string path)
     {
+        // 설치 프로그램(Inno Setup)은 Windows 전용. 앱은 PlatformInfo.SupportsAutoInstall 일 때만 여기까지 옴
+        if (!OperatingSystem.IsWindows())
+            throw new PlatformNotSupportedException("Automatic install is only available on Windows.");
         var psi = new ProcessStartInfo(path) { UseShellExecute = false, WorkingDirectory = Path.GetDirectoryName(path)! };
         foreach (var a in new[] { "/SILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/CLOSEAPPLICATIONS" }) psi.ArgumentList.Add(a);
         Process.Start(psi);

@@ -17,10 +17,7 @@
         <vm:MainViewModel />
     </Design.DataContext>
 
-    <Window.KeyBindings>
-        <KeyBinding Gesture="Ctrl+Shift+V" Command="{Binding OcrFromClipboardCommand}" />
-        <KeyBinding Gesture="Ctrl+H" Command="{Binding ShowHistoryCommand}" />
-    </Window.KeyBindings>
+    <!-- 단축키는 운영체제마다 달라서(macOS 는 ⌘) 코드에서 넣음: MainWindow.axaml.cs, Services/Shortcuts.cs -->
 
     <DockPanel>
         <!-- 메뉴 (순서는 Java 버전과 같음) -->
@@ -28,12 +25,12 @@
             <MenuItem Header="{Binding L[FILE_MENU]}">
                 <MenuItem Header="{Binding L[LOAD_MENU]}" Command="{Binding LoadCommand}" />
                 <MenuItem Header="{Binding L[LOAD_OCR_MENU]}" Command="{Binding OcrFromFileCommand}" />
-                <MenuItem Header="{Binding L[LOAD_CLIPBOARD_OCR_MENU]}" Command="{Binding OcrFromClipboardCommand}"
-                          InputGesture="Ctrl+Shift+V" />
+                <MenuItem x:Name="OcrClipboardMenu" Header="{Binding L[LOAD_CLIPBOARD_OCR_MENU]}"
+                          Command="{Binding OcrFromClipboardCommand}" />
                 <MenuItem Header="{Binding L[ENCRYPT_FILE_MENU]}" Command="{Binding EncryptFilesCommand}" />
                 <MenuItem Header="{Binding L[DECRYPT_FILE_MENU]}" Command="{Binding DecryptFilesCommand}" />
                 <Separator />
-                <MenuItem Header="{Binding L[HISTORY_MENU]}" Command="{Binding ShowHistoryCommand}" InputGesture="Ctrl+H" />
+                <MenuItem x:Name="HistoryMenu" Header="{Binding L[HISTORY_MENU]}" Command="{Binding ShowHistoryCommand}" />
                 <Separator />
                 <MenuItem Header="{Binding L[SAVE_SETTINGS_MENU]}" ToggleType="CheckBox"
                           IsChecked="{Binding SaveSettings}" />

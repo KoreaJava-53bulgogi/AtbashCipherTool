@@ -127,11 +127,52 @@ public class FileFeatureTests : IDisposable
         Assert.False(await vm.PasteImageIfAnyAsync());
         Assert.Equal("", vm.InputText);
 
-        // 이미지가 없으면 메뉴에서 눌렀을 때 안내
+        // 이미지가 없으면 메뉴에서 눌렀을 때 안내 (화면 캡처 단축키는 운영체제마다 다름 → 아래 시험)
         _clipboard.Text = null;
         _clipboard.ImagePng = null;
+        vm.Platform = Atbash.Core.Updates.PlatformInfo.WindowsX64;
         await vm.OcrFromClipboardCommand.ExecuteAsync(null);
         Assert.Contains("Win+Shift+S", Assert.Single(_dialogs.Messages).Message);
+    }
+
+    [AvaloniaTheory]
+    [InlineData("win-x64", "Win+Shift+S")]
+    [InlineData("osx-arm64", "Control+Shift+Command+4")]
+    [InlineData("linux-x64", "PrtSc")]
+    public async Task Missing_clipboard_image_hint_uses_the_screenshot_key_of_each_os(string platform, string key)
+    {
+        var vm = NewVm();
+        vm.Platform = Atbash.Core.Updates.PlatformInfo.ById(platform)!;
+        await vm.OcrFromClipboardCommand.ExecuteAsync(null);
+        var message = Assert.Single(_dialogs.Messages).Message;
+        Assert.Contains(key, message);
+        Assert.StartsWith("클립보드에 이미지가 없습니다.", message);
+    }
+
+    // ---- OCR 엔진이 없는 운영체제 ------------------------------------------------------------
+
+    [AvaloniaFact]
+    public async Task Without_an_ocr_engine_every_ocr_path_explains_instead_of_failing()
+    {
+        var vm = NewVm();
+        vm.Ocr = UnsupportedOcrEngine.Instance;
+        const string expected = "이 운영체제에서는 아직 이미지에서 글자 읽기(OCR)를 지원하지 않습니다.";
+
+        // 파일에서
+        File.WriteAllBytes(PathOf("a.png"), TextImage("A"));
+        _dialogs.OpenResults.Enqueue(new[] { PathOf("a.png") });
+        await vm.OcrFromFileCommand.ExecuteAsync(null);
+        // 클립보드 이미지 붙여넣기
+        _clipboard.ImagePng = TextImage("B");
+        Assert.True(await vm.PasteImageIfAnyAsync());
+        // 끌어다 놓기
+        await vm.HandleDroppedFilesAsync(new[] { PathOf("a.png") });
+
+        Assert.Equal(3, _dialogs.Messages.Count);
+        Assert.All(_dialogs.Messages, m => Assert.StartsWith(expected, m.Message));
+        Assert.All(_dialogs.Messages, m => Assert.Equal(MessageKind.Info, m.Kind)); // 오류가 아니라 안내
+        Assert.Equal("", vm.InputText);
+        Assert.False(vm.IsBusy);
     }
 
     // ---- 암호화 / 복호화 ----------------------------------------------------------------

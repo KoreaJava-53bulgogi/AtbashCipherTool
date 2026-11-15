@@ -15,9 +15,12 @@
     <Company>June</Company>
   </PropertyGroup>
 
-  <!-- 배포용 빌드 (release.bat 의 dotnet publish): .NET 포함, 64비트 Windows -->
+  <!--
+    배포용 빌드 (release.bat 의 dotnet publish): .NET 포함. 기본은 64비트 Windows.
+    다른 운영체제는 -r 로 지정:  dotnet publish -c Release -r osx-arm64 / -r linux-x64
+  -->
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">win-x64</RuntimeIdentifier>
     <SelfContained>true</SelfContained>
     <!-- 미리 컴파일해서 앱이 더 빨리 켜지게 -->
     <PublishReadyToRun>true</PublishReadyToRun>
@@ -26,13 +29,17 @@
     <SatelliteResourceLanguages>en;ko;ja;zh-Hans</SatelliteResourceLanguages>
   </PropertyGroup>
 
-  <!-- 배포본 정리: 라이브러리가 함께 넣는 디버그 파일(약 100MB)과 64비트에서 쓰지 않는 32비트 OCR 엔진 -->
+  <!--
+    배포본 정리: 라이브러리가 함께 넣는 디버그 파일(약 100MB)과 64비트에서 쓰지 않는 32비트 OCR 엔진.
+    Windows 가 아니면 Windows 용 OCR 엔진(x64 폴더의 dll)도 쓸 수 없으므로 뺌.
+  -->
   <Target Name="TrimPublishOutput" AfterTargets="Publish">
     <ItemGroup>
       <_PublishedPdb Include="$(PublishDir)**\*.pdb" />
     </ItemGroup>
     <Delete Files="@(_PublishedPdb)" />
     <RemoveDir Directories="$(PublishDir)x86" />
+    <RemoveDir Condition="!$(RuntimeIdentifier.StartsWith('win'))" Directories="$(PublishDir)x64" />
   </Target>
 
   <ItemGroup>

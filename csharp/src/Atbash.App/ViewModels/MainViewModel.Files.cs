@@ -112,8 +112,17 @@ public partial class MainViewModel
     {
         if (await TryRecognizeClipboardAsync()) return;
         if (Dialogs != null)
-            await Dialogs.ShowMessageAsync(L["OCR_ERROR_TITLE"], L["CLIPBOARD_NO_IMAGE_MESSAGE"]);
+            await Dialogs.ShowMessageAsync(L["OCR_ERROR_TITLE"], L[ClipboardNoImageKey]);
     }
+
+    /// <summary>글자 읽기 엔진 (운영체제마다 다름. 테스트에서 바꿈)</summary>
+    public IOcrEngine Ocr { get; set; } = OcrService.Current;
+
+    /// <summary>"클립보드에 이미지가 없음" 안내: 화면 캡처 단축키가 운영체제마다 달라서 문구도 다름</summary>
+    private string ClipboardNoImageKey =>
+        Platform.Id.StartsWith("osx", StringComparison.Ordinal) ? "CLIPBOARD_NO_IMAGE_MESSAGE_MAC"
+        : Platform.Id.StartsWith("linux", StringComparison.Ordinal) ? "CLIPBOARD_NO_IMAGE_MESSAGE_LINUX"
+        : "CLIPBOARD_NO_IMAGE_MESSAGE";
 
     /// <summary>
     /// 입력창에서 Ctrl+V 를 눌렀을 때: 클립보드에 글자가 없고 이미지만 있으면 OCR 하고 true.
@@ -147,11 +156,19 @@ public partial class MainViewModel
     /// <summary>글자를 읽어 원본 텍스트에 넣음. 오래 걸리므로 백그라운드에서</summary>
     private async Task RecognizeAsync(Func<byte[]> imageBytes)
     {
+        // 이 운영체제용 엔진이 아직 없으면 오류 대신 안내만 함
+        if (!Ocr.IsSupported)
+        {
+            if (Dialogs != null)
+                await Dialogs.ShowMessageAsync(L["OCR_ERROR_TITLE"], L["OCR_UNSUPPORTED_MESSAGE"]);
+            return;
+        }
+
         string text;
         IsBusy = true;
         try
         {
-            text = await Task.Run(() => OcrService.Recognize(imageBytes()));
+            text = await Task.Run(() => Ocr.Recognize(imageBytes()));
         }
         catch (Exception e)
         {
