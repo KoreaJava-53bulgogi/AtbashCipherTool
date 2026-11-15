@@ -63,7 +63,6 @@ public class PlatformTests
     [InlineData("win", Architecture.X64, true)]
     [InlineData("win", Architecture.X86, true)]
     [InlineData("win", Architecture.Arm64, false)] // Tesseract 패키지에 ARM64 용 엔진이 없음
-    [InlineData("osx", Architecture.Arm64, false)] // D단계: Apple Vision
     public void Picks_an_ocr_engine_per_os(string os, Architecture arch, bool supported)
     {
         var engine = OcrService.For(os, arch);
@@ -76,6 +75,44 @@ public class PlatformTests
     {
         Assert.Same(TesseractCliOcrEngine.System, OcrService.For("linux", Architecture.X64));
         Assert.True(OcrService.For("linux", Architecture.Arm64).IsSupported);
+    }
+
+    // ---- macOS: Apple Vision (앱 안의 atbash-vision-ocr) -----------------------------------------
+
+    [Fact]
+    public void Mac_uses_apple_vision()
+    {
+        Assert.Same(VisionOcrEngine.System, OcrService.For("osx", Architecture.Arm64));
+        Assert.Same(VisionOcrEngine.System, OcrService.For("osx", Architecture.X64));
+    }
+
+    [Fact]
+    public void Missing_vision_helper_is_reported_as_a_broken_app()
+    {
+        var engine = new VisionOcrEngine(() => null);
+        Assert.True(engine.IsSupported);
+        Assert.False(engine.IsAvailable(out var reason));
+        Assert.Contains(VisionOcrEngine.HelperName, reason);
+        var e = Assert.Throws<InvalidOperationException>(() => engine.Recognize(SmallPng()));
+        Assert.Contains("download the app again", e.Message);
+    }
+
+    [Fact]
+    public void Vision_helper_gets_the_original_image_and_its_utf8_output_is_used()
+    {
+        if (OperatingSystem.IsWindows()) Assert.Skip("shell script fake needs macOS/Linux");
+        var dir = Directory.CreateTempSubdirectory("atbash-fake-vision-").FullName;
+        try
+        {
+            // 인자 1개(그림 경로)만 받는지, 그림이 원본 그대로인지(크기 비교) 확인
+            var png = SmallPng();
+            var helper = FakeTesseract(dir, $"[ $# -eq 1 ] && [ $(wc -c < \"$1\") -eq {png.Length} ] && echo '안녕하세요 Vision'");
+            Assert.Equal("안녕하세요 Vision", new VisionOcrEngine(() => helper).Recognize(png).Trim());
+        }
+        finally
+        {
+            Directory.Delete(dir, true);
+        }
     }
 
     // ---- Linux: 시스템 tesseract 명령 ------------------------------------------------------

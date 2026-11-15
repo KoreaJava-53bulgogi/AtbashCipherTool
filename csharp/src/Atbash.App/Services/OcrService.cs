@@ -8,7 +8,7 @@ namespace Atbash.App.Services;
 
 /// <summary>
 /// 이미지에서 글자를 읽는 엔진. 운영체제마다 다른 엔진을 씀 (크로스 플랫폼 계획):
-///   Windows x64 → Tesseract (지금),  macOS → Apple Vision (D단계),  Linux → 시스템 Tesseract (C단계).
+///   Windows x64 → Tesseract 라이브러리,  macOS → Apple Vision (VisionOcrEngine),  Linux → 시스템 tesseract 명령 (TesseractCliOcrEngine).
 /// 엔진이 아직 없는 곳은 <see cref="UnsupportedOcrEngine"/>.
 /// </summary>
 public interface IOcrEngine
@@ -41,6 +41,7 @@ public static class OcrService
     {
         "win" when architecture is Architecture.X64 or Architecture.X86 => TesseractOcrEngine.Instance,
         "linux" => TesseractCliOcrEngine.System,
+        "osx" => VisionOcrEngine.System,
         _ => UnsupportedOcrEngine.Instance,
     };
 

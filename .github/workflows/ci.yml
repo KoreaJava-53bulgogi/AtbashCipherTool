@@ -54,6 +54,13 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo apt-get update -q && sudo apt-get install -y -q tesseract-ocr fonts-noto-cjk
 
+      # macOS 의 OCR 은 Apple Vision 도우미(Swift)를 씀 → 빌드해서 실제로 글자를 읽는 테스트까지 돌림
+      - name: Build Apple Vision OCR helper (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          swiftc -O -target arm64-apple-macos13.0 csharp/packaging/macos/VisionOcr.swift -o "$RUNNER_TEMP/atbash-vision-ocr"
+          echo "ATBASH_VISION_OCR=$RUNNER_TEMP/atbash-vision-ocr" >> "$GITHUB_ENV"
+
       - name: Test
         run: dotnet test csharp/AtbashCipher.sln --logger "GitHubActions" --logger trx --results-directory test-results
 
@@ -105,6 +112,56 @@ jobs:
         with:
           name: snapshots-${{ matrix.os }}
           path: snapshots
+          if-no-files-found: ignore
+          retention-days: 14
+
+  # macOS .dmg: 만들고, 실제로 켜 보고, 화면을 찍어 둠 (Discord DM 베타용 파일)
+  dmg:
+    name: DMG (macOS Apple Silicon)
+    runs-on: macos-latest
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: csharp/global.json
+
+      - name: Build .app and .dmg
+        run: bash csharp/packaging/macos/build-dmg.sh out
+
+      # .dmg 를 열어 앱을 꺼내고 20초 동안 켜 두어 꺼지지 않는지 확인 + 화면 찍기
+      - name: Smoke test (start the app)
+        run: |
+          dmg="$(ls out/*.dmg)"
+          mnt="$(mktemp -d)"
+          hdiutil attach "$dmg" -mountpoint "$mnt" -nobrowse -quiet
+          cp -R "$mnt/Atbash Cipher Tool.app" "$RUNNER_TEMP/"
+          hdiutil detach "$mnt" -quiet
+          app="$RUNNER_TEMP/Atbash Cipher Tool.app"
+          codesign --verify --deep --strict "$app" && echo "ad-hoc signature OK"
+          test -x "$app/Contents/MacOS/atbash-vision-ocr"
+          spctl --assess --type execute "$app" 2>&1 || echo "(expected: not notarized, testers must allow it once)"
+          "$app/Contents/MacOS/AtbashCipherTool" > app.log 2>&1 &
+          pid=$!
+          sleep 20
+          screencapture -x screenshot.png || echo "screenshot not allowed on this runner"
+          if kill -0 $pid 2>/dev/null; then echo "app is running after 20s"; kill $pid; else echo "app exited early"; cat app.log; exit 1; fi
+          echo "--- app output:"; cat app.log || true
+          echo "::notice title=DMG::$(basename "$dmg") $(du -h "$dmg" | cut -f1) - started and kept running"
+
+      - name: Upload DMG and screenshot
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: dmg-osx-arm64
+          path: |
+            out/*.dmg
+            out/*.sha256
+            screenshot.png
+            app.log
           if-no-files-found: ignore
           retention-days: 14
 

@@ -6,3 +6,5 @@
 *.sh text eol=lf
 csharp/packaging/linux/AppRun text eol=lf
 *.desktop text eol=lf
+*.swift text eol=lf
+*.plist text eol=lf

@@ -1,7 +1,9 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Atbash.App.App"
+             Name="Atbash Cipher Tool"
              RequestedThemeVariant="Light">
+    <!-- Name: macOS 메뉴 막대의 앱 메뉴(정보·종료)에 보이는 이름 -->
 
     <!-- 테마 색 기본값 (ThemeService.Apply 가 바꿔 끼움). 값은 Java 버전 라이트 테마와 같음 -->
     <Application.Resources>

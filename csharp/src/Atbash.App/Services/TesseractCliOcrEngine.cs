@@ -1,9 +1,5 @@
 using System;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Atbash.App.Services;
 
@@ -27,7 +23,6 @@ public sealed class TesseractCliOcrEngine : IOcrEngine
     /// <summary>PATH 에서 tesseract 를 찾는 엔진 (실제 앱)</summary>
     public static TesseractCliOcrEngine System { get; } = new(() => FindOnPath("tesseract"), OcrService.DataPath);
 
-    private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(90);
     private readonly Func<string?> _findExecutable;
     private readonly string _dataPath;
 
@@ -53,50 +48,10 @@ public sealed class TesseractCliOcrEngine : IOcrEngine
     {
         var exe = _findExecutable()
             ?? throw new OcrSetupRequiredException("OCR_LINUX_INSTALL_MESSAGE", "tesseract is not installed.");
-        var prepared = OcrImage.Prepare(imageBytes);
-
-        var input = Path.Combine(Path.GetTempPath(), "atbash-ocr-" + Guid.NewGuid().ToString("N") + ".png");
-        try
-        {
-            File.WriteAllBytes(input, prepared);
-            var psi = new ProcessStartInfo(exe)
-            {
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                StandardOutputEncoding = Encoding.UTF8,
-                StandardErrorEncoding = Encoding.UTF8,
-            };
-            foreach (var a in new[] { input, "stdout", "--tessdata-dir", _dataPath, "-l", "kor+eng" })
-                psi.ArgumentList.Add(a);
-
-            using var process = Process.Start(psi) ?? throw new InvalidOperationException("Could not start tesseract.");
-            // 두 출력을 동시에 읽어야 버퍼가 가득 차서 멈추는 일이 없음
-            var stdout = process.StandardOutput.ReadToEndAsync();
-            var stderr = process.StandardError.ReadToEndAsync();
-            if (!process.WaitForExit(Timeout))
-            {
-                try { process.Kill(entireProcessTree: true); } catch (InvalidOperationException) { }
-                throw new TimeoutException("tesseract took too long.");
-            }
-            Task.WaitAll(stdout, stderr);
-            if (process.ExitCode != 0)
-                throw new InvalidOperationException("tesseract failed: " + stderr.Result.Trim());
-            return stdout.Result;
-        }
-        finally
-        {
-            try { File.Delete(input); } catch (IOException) { }
-        }
+        return OcrProcess.Run(exe, OcrImage.Prepare(imageBytes),
+            new[] { "{input}", "stdout", "--tessdata-dir", _dataPath, "-l", "kor+eng" });
     }
 
     /// <summary>PATH 에서 실행 파일 찾기</summary>
-    public static string? FindOnPath(string name)
-    {
-        var file = OperatingSystem.IsWindows() ? name + ".exe" : name;
-        return (Environment.GetEnvironmentVariable("PATH") ?? "")
-            .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
-            .Select(dir => Path.Combine(dir, file))
-            .FirstOrDefault(File.Exists);
-    }
+    public static string? FindOnPath(string name) => OcrProcess.FindOnPath(name);
 }
