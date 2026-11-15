@@ -59,15 +59,19 @@ jobs:
 
       # 통과·실패·건너뜀 개수와, 건너뛴 테스트가 무엇이고 왜인지를 안내(notice)로 남김.
       # (어느 운영체제에서 무엇을 건너뛰는지 한눈에 보려는 것 — 건너뜀이 조용히 늘어나는 것을 막음)
+      # 안내만 하는 단계라서, 여기서 문제가 생겨도 전체 결과를 실패로 만들지 않음 (테스트 실패는 위 단계가 알려 줌)
       - name: Test report
         if: always()
+        continue-on-error: true
         shell: pwsh
         run: |
           $ns = New-Object System.Xml.XmlNamespaceManager((New-Object System.Xml.NameTable))
           $ns.AddNamespace('t', 'http://microsoft.com/schemas/VisualStudio/TeamTest/2010')
           $passed = 0; $failed = 0; $skipped = 0
           foreach ($file in Get-ChildItem -Recurse -Filter *.trx -Path test-results -ErrorAction SilentlyContinue) {
-            $xml = [xml](Get-Content $file.FullName -Raw)
+            # XML 에 쓸 수 없는 제어 문자(예: OCR 결과의 \f)가 섞여 있으면 빼고 읽음
+            $raw = (Get-Content $file.FullName -Raw) -replace '[\x00-\x08\x0B\x0C\x0E-\x1F]', ''
+            try { $xml = [xml]$raw } catch { Write-Host "::warning title=Test report::cannot read $($file.Name): $($_.Exception.Message)"; continue }
             foreach ($r in $xml.SelectNodes('//t:UnitTestResult', $ns)) {
               if ($r.outcome -eq 'Passed') { $passed++ }
               elseif ($r.outcome -eq 'Failed') { $failed++ }
