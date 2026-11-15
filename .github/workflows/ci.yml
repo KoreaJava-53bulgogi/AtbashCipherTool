@@ -31,17 +31,17 @@ jobs:
         with:
           global-json-file: csharp/global.json
 
-      # Java 8.x 앱과 AES·업데이트 파일 형식이 서로 호환되는지 확인하는 테스트용 (Linux 한 곳에서만).
+      # Java 8.x 앱과 AES·업데이트 파일 형식이 서로 호환되는지 확인하는 테스트용.
+      # 운영체제마다 암호 라이브러리가 달라서(Windows·macOS·Linux 각자의 것) 세 곳 모두에서 확인함.
       # 그 테스트는 Java 클래스가 있으면 자동으로 실행되고, 없으면 건너뜀.
       - name: Set up Java (interop tests)
-        if: matrix.os == 'ubuntu-latest'
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
 
       - name: Compile the Java classes used by the interop tests
-        if: matrix.os == 'ubuntu-latest'
+        shell: bash
         run: |
           mkdir -p target/classes
           javac -encoding UTF-8 -d target/classes AESFileCipher.java UpdateChecker.java

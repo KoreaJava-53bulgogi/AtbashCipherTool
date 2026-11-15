@@ -54,7 +54,9 @@ public static class OcrService
         }
         catch (Exception e)
         {
-            reason = e.GetType().Name + ": " + e.Message;
+            // 겉에 싸여 있는 예외(TargetInvocationException 등)를 벗겨서 진짜 이유(어떤 파일을 못 찾는지)를 보여줌
+            var root = e.GetBaseException();
+            reason = root.GetType().Name + ": " + root.Message;
             return false;
         }
     }
