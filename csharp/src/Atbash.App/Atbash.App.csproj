@@ -8,7 +8,7 @@
     <AssemblyName>AtbashCipherTool</AssemblyName>
     <RootNamespace>Atbash.App</RootNamespace>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
-    <Version>9.0.0</Version>
+    <Version>9.1.0-beta.1</Version>
     <!-- 파일 속성의 버전에 git 커밋 번호(9.0.0+abc123)가 붙지 않게 -->
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <Product>Atbash Cipher Tool</Product>

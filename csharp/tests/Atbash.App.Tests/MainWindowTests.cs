@@ -171,7 +171,7 @@ public class MainWindowTests : IDisposable
     {
         var (w, vm) = Open();
         vm.SelectedModeIndex = (int)CipherMode.Rot13;
-        Assert.StartsWith("아트배쉬 암호화/복호화 툴 v9.0.0", w.Title);
+        Assert.StartsWith("아트배쉬 암호화/복호화 툴 v" + MainViewModel.Version, w.Title); // 버전은 csproj 의 Version (베타 이름 포함)
 
         vm.SetLanguageCommand.Execute(AppLanguage.English);
         Pump();

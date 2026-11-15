@@ -59,6 +59,17 @@
 4. 올린 파일의 SHA-256 이 `version.json` 과 같은지 확인합니다.
 5. `version.json` 을 커밋해서 `main` 에 올립니다. **← 이때부터 사용자에게 알림이 갑니다.**
 
+## 3-1. macOS 릴리스는 자동입니다
+
+1. `csharp/src/Atbash.App/Atbash.App.csproj` 의 `<Version>` 을 정합니다 (예: `9.1.0-beta.1`).
+2. 그 커밋에 **`a_` 태그**를 붙여 올립니다: `git tag a_9.1.0-beta.1` → `git push origin a_9.1.0-beta.1`
+3. GitHub Actions(`.github/workflows/release-macos.yml`)가 Mac 서버에서 알아서 합니다:
+   태그와 버전이 맞는지 확인 → 테스트 → `.dmg` 만들기 → 실제로 켜 보기 → 릴리스 만들고 `.dmg` 올리기.
+   버전에 `-beta` 같은 `-` 가 있으면 Pre-release, 어떤 경우에도 "Latest" 로 표시하지 않습니다.
+4. `version.json` 은 건드리지 않습니다. 정식 Mac 출시 때만 `ReleaseTool merge --platform osx-arm64` 로 반영합니다.
+
+받는 사람용 안내(처음 열 때 macOS 가 막는 문제 포함)는 Mac 베타 안내서를 함께 보냅니다.
+
 ## 4. 베타를 소수에게만 나눌 때 (예: Discord DM)
 
 - 2번(`version.json`)과 5번을 **하지 않습니다.** Pre-release 로 올리고 링크만 DM 으로 보냅니다. 그러면 일반 사용자에게는 알림이 가지 않습니다.
