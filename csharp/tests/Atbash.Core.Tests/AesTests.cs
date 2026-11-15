@@ -238,14 +238,19 @@ internal sealed class JavaInterop
 
     private static string? FindJdkTool(string name)
     {
+        var file = OperatingSystem.IsWindows() ? name + ".exe" : name;
         var candidates = new List<string>();
         var javaHome = Environment.GetEnvironmentVariable("JAVA_HOME");
-        if (!string.IsNullOrEmpty(javaHome)) candidates.Add(Path.Combine(javaHome, "bin", name + ".exe"));
+        if (!string.IsNullOrEmpty(javaHome)) candidates.Add(Path.Combine(javaHome, "bin", file));
         var programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
         var javaDir = Path.Combine(programFiles, "Java");
         if (Directory.Exists(javaDir))
             candidates.AddRange(Directory.GetDirectories(javaDir, "jdk-*").OrderDescending()
-                .Select(d => Path.Combine(d, "bin", name + ".exe")));
+                .Select(d => Path.Combine(d, "bin", file)));
+        // PATH 에 있는 java / javac
+        var path = Environment.GetEnvironmentVariable("PATH") ?? "";
+        candidates.AddRange(path.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
+            .Select(dir => Path.Combine(dir, file)));
         return candidates.FirstOrDefault(File.Exists);
     }
 }

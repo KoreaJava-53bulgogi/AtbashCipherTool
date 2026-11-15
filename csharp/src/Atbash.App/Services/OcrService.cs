@@ -36,6 +36,29 @@ public static class OcrService
 
     public static string RecognizeFile(string path) => Recognize(File.ReadAllBytes(path));
 
+    /// <summary>
+    /// 이 운영체제에서 OCR 엔진을 쓸 수 있는지 확인 (엔진 파일과 언어 데이터가 있는지).
+    /// 지금 쓰는 Tesseract 패키지는 Windows 용 엔진만 들어 있어서 macOS·Linux 에서는 false 임.
+    /// 쓸 수 없으면 이유를 돌려줌.
+    /// </summary>
+    public static bool IsAvailable(out string reason)
+    {
+        try
+        {
+            lock (Lock)
+            {
+                _engine ??= CreateEngine();
+            }
+            reason = "";
+            return true;
+        }
+        catch (Exception e)
+        {
+            reason = e.GetType().Name + ": " + e.Message;
+            return false;
+        }
+    }
+
     private static TesseractEngine CreateEngine()
     {
         foreach (var lang in new[] { "kor", "eng" })

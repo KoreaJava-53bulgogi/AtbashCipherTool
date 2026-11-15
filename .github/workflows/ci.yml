@@ -1,0 +1,60 @@
+name: CI
+
+# Windows · macOS · Linux 에서 같은 테스트를 돌립니다.
+# 목적: 코드를 바꿀 때마다 "세 운영체제에서 다 되는지"를 자동으로 확인.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false # 한 곳이 실패해도 나머지 결과는 끝까지 확인
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+      # 화면 테스트가 그린 창 이미지를 모아 두는 폴더 (아래에서 업로드)
+      ATBASH_SNAPSHOT_DIR: ${{ github.workspace }}/snapshots
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: csharp/global.json
+
+      # Java 8.x 앱과 AES·업데이트 파일 형식이 서로 호환되는지 확인하는 테스트용 (Linux 한 곳에서만).
+      # 그 테스트는 Java 클래스가 있으면 자동으로 실행되고, 없으면 건너뜀.
+      - name: Set up Java (interop tests)
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Compile the Java classes used by the interop tests
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          mkdir -p target/classes
+          javac -encoding UTF-8 -d target/classes AESFileCipher.java UpdateChecker.java
+          ls target/classes
+
+      - name: Test
+        run: dotnet test csharp/AtbashCipher.sln --logger "GitHubActions"
+
+      - name: Upload window snapshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: snapshots-${{ matrix.os }}
+          path: snapshots
+          if-no-files-found: ignore
+          retention-days: 14

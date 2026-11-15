@@ -94,6 +94,7 @@ public class FileFeatureTests : IDisposable
     [AvaloniaFact]
     public async Task Ocr_reads_korean_and_english_from_an_image_file()
     {
+        OcrGuard.RequireOrSkip();
         var vm = NewVm();
         File.WriteAllBytes(PathOf("text.png"), TextImage("HELLO 2026 안녕하세요"));
         _dialogs.OpenResults.Enqueue(new[] { PathOf("text.png") });
@@ -106,16 +107,25 @@ public class FileFeatureTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task Clipboard_image_is_recognized_and_text_paste_is_left_alone()
+    public async Task Clipboard_image_is_recognized()
     {
+        OcrGuard.RequireOrSkip();
         var vm = NewVm();
         _clipboard.ImagePng = TextImage("CLIPBOARD 77");
         Assert.True(await vm.PasteImageIfAnyAsync());
         Assert.Contains("CLIPBOARD", vm.InputText);
+    }
 
+    /// <summary>OCR 엔진이 필요 없는 부분: 모든 운영체제에서 항상 실행됨</summary>
+    [AvaloniaFact]
+    public async Task Clipboard_text_is_left_alone_and_a_missing_image_is_explained()
+    {
+        var vm = NewVm();
         // 글자도 함께 있으면(웹페이지 복사 등) OCR 하지 않고 평소처럼 붙여넣게 함
+        _clipboard.ImagePng = TextImage("CLIPBOARD 77");
         _clipboard.Text = "plain text";
         Assert.False(await vm.PasteImageIfAnyAsync());
+        Assert.Equal("", vm.InputText);
 
         // 이미지가 없으면 메뉴에서 눌렀을 때 안내
         _clipboard.Text = null;
@@ -189,11 +199,6 @@ public class FileFeatureTests : IDisposable
         await vm.HandleDroppedFilesAsync(new[] { PathOf("note.txt") });
         Assert.Equal("드롭 테스트", vm.InputText);
 
-        // 이미지 → OCR
-        File.WriteAllBytes(PathOf("shot.png"), TextImage("DROPPED IMAGE"));
-        await vm.HandleDroppedFilesAsync(new[] { PathOf("shot.png") });
-        Assert.Contains("DROPPED", vm.InputText);
-
         // 그 밖의 파일 → 암호화할지 물어봄 (아니요)
         File.WriteAllBytes(PathOf("app.exe"), new byte[] { 0x4D, 0x5A, 0, 0 });
         await vm.HandleDroppedFilesAsync(new[] { PathOf("app.exe") });
@@ -205,5 +210,15 @@ public class FileFeatureTests : IDisposable
         _dialogs.PasswordResults.Enqueue("pw");
         await vm.HandleDroppedFilesAsync(new[] { PathOf("secret.txt.enc") });
         Assert.Equal("드롭 테스트", File.ReadAllText(PathOf("secret.txt")));
+    }
+
+    [AvaloniaFact]
+    public async Task Dropped_image_is_recognized()
+    {
+        OcrGuard.RequireOrSkip();
+        var vm = NewVm();
+        File.WriteAllBytes(PathOf("shot.png"), TextImage("DROPPED IMAGE"));
+        await vm.HandleDroppedFilesAsync(new[] { PathOf("shot.png") });
+        Assert.Contains("DROPPED", vm.InputText);
     }
 }
