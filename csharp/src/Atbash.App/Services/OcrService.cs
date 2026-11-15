@@ -126,28 +126,109 @@ public sealed class TesseractOcrEngine : IOcrEngine
 }
 
 /// <summary>OCR 전에 이미지를 다듬음 (모든 Tesseract 엔진이 같이 씀)</summary>
-internal static class OcrImage
+/// <summary>
+/// OCR 전에 이미지를 Tesseract 가 잘 읽는 모양으로 다듬음:
+///  1) 흑백으로 (투명한 부분은 흰 바탕)
+///  2) 배경이 어두우면 뒤집음 (다크 테마 캡처: 밝은 글씨 → 검은 글씨)
+///  3) 글줄 높이를 재서 약 <see cref="TargetLineHeight"/> 픽셀이 되게 줄이거나 키움
+///     (예전에는 Java 버전처럼 무조건 2배였는데, 큰 글씨는 너무 커져서 못 읽었음)
+///  4) 둘레에 흰 여백 (글자가 가장자리에 붙으면 Tesseract 가 아무것도 못 읽음)
+/// </summary>
+public static class OcrImage
 {
+    /// <summary>Tesseract 가 가장 잘 읽는 글줄 높이 (픽셀)</summary>
+    public const int TargetLineHeight = 40;
+
+    /// <summary>둘레에 넣는 흰 여백 (픽셀, 크기를 바꾼 뒤 기준)</summary>
+    public const int Margin = 32;
+
+    /// <summary>크기를 바꾼 뒤 그림의 긴 변 한계 (너무 커지면 느려짐)</summary>
+    private const int MaxSide = 8000;
+
     /// <exception cref="InvalidDataException">이미지를 읽을 수 없음</exception>
     public static byte[] Prepare(byte[] imageBytes)
     {
         using var original = SKBitmap.Decode(imageBytes) ?? throw new InvalidDataException("Cannot read image.");
-        return Preprocess(original);
-    }
+        int width = original.Width, height = original.Height;
+        var gray = ToGray(original);
+        if (IsDarkBackground(gray))
+            for (int i = 0; i < gray.Length; i++) gray[i] = (byte)(255 - gray[i]);
 
-    /// <summary>흑백 + 2배 확대 (Java 버전과 같은 전처리) 후 PNG 로</summary>
-    private static byte[] Preprocess(SKBitmap source)
-    {
-        var info = new SKImageInfo(source.Width * 2, source.Height * 2, SKColorType.Gray8, SKAlphaType.Opaque);
+        double scale = ScaleFor(gray, width, height);
+        scale = Math.Min(scale, MaxSide / (double)Math.Max(width, height));
+
+        using var grayBitmap = new SKBitmap(new SKImageInfo(width, height, SKColorType.Gray8, SKAlphaType.Opaque));
+        System.Runtime.InteropServices.Marshal.Copy(gray, 0, grayBitmap.GetPixels(), gray.Length);
+        grayBitmap.NotifyPixelsChanged();
+
+        int outW = Math.Max(1, (int)Math.Round(width * scale)), outH = Math.Max(1, (int)Math.Round(height * scale));
+        var info = new SKImageInfo(outW + 2 * Margin, outH + 2 * Margin, SKColorType.Gray8, SKAlphaType.Opaque);
         using var surface = SKSurface.Create(info);
         var canvas = surface.Canvas;
-        canvas.Clear(SKColors.White); // 투명한 부분은 흰 바탕으로
-        using var image = SKImage.FromBitmap(source);
+        canvas.Clear(SKColors.White);
+        using var image = SKImage.FromBitmap(grayBitmap);
         using var paint = new SKPaint();
-        canvas.DrawImage(image, new SKRect(0, 0, info.Width, info.Height),
-            new SKSamplingOptions(SKCubicResampler.Mitchell), paint);
+        var sampling = scale >= 1 ? new SKSamplingOptions(SKCubicResampler.Mitchell) : new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear);
+        canvas.DrawImage(image, new SKRect(Margin, Margin, Margin + outW, Margin + outH), sampling, paint);
         using var snapshot = surface.Snapshot();
         using var data = snapshot.Encode(SKEncodedImageFormat.Png, 100);
         return data.ToArray();
+    }
+
+    /// <summary>밝기 0~255 (한 줄씩 이어 붙인 배열). 투명한 부분은 흰 바탕에 올린 것처럼</summary>
+    private static byte[] ToGray(SKBitmap source)
+    {
+        using var rgba = new SKBitmap(new SKImageInfo(source.Width, source.Height, SKColorType.Rgba8888, SKAlphaType.Unpremul));
+        if (!source.CopyTo(rgba, SKColorType.Rgba8888)) throw new InvalidDataException("Cannot read image.");
+        var pixels = rgba.GetPixelSpan();
+        var gray = new byte[source.Width * source.Height];
+        for (int i = 0; i < gray.Length; i++)
+        {
+            int r = pixels[i * 4], g = pixels[i * 4 + 1], b = pixels[i * 4 + 2], a = pixels[i * 4 + 3];
+            int lum = (r * 299 + g * 587 + b * 114) / 1000;
+            gray[i] = (byte)((lum * a + 255 * (255 - a)) / 255);
+        }
+        return gray;
+    }
+
+    /// <summary>배경이 어두운지 (평균 밝기가 중간보다 어두우면, 대부분을 차지하는 배경이 어두운 것)</summary>
+    public static bool IsDarkBackground(byte[] gray)
+    {
+        if (gray.Length == 0) return false;
+        long sum = 0;
+        foreach (var v in gray) sum += v;
+        return sum / gray.Length < 128;
+    }
+
+    /// <summary>
+    /// 글줄 높이가 <see cref="TargetLineHeight"/> 가 되도록 하는 배율 (0.25~4배).
+    /// 가로로 훑어서 어두운 점이 있는 줄들이 이어진 덩어리 = 글줄로 보고, 그 높이의 중앙값을 씀.
+    /// 글줄을 찾지 못하면 예전과 같은 2배.
+    /// </summary>
+    public static double ScaleFor(byte[] gray, int width, int height)
+    {
+        int minInk = Math.Max(1, width / 500); // 잡티 무시
+        var lines = new System.Collections.Generic.List<int>();
+        int run = 0;
+        for (int y = 0; y <= height; y++)
+        {
+            bool ink = false;
+            if (y < height)
+            {
+                int count = 0;
+                for (int x = 0, row = y * width; x < width; x++)
+                    if (gray[row + x] < 128 && ++count >= minInk) { ink = true; break; }
+            }
+            if (ink) run++;
+            else
+            {
+                if (run >= 3) lines.Add(run);
+                run = 0;
+            }
+        }
+        if (lines.Count == 0) return 2.0;
+        lines.Sort();
+        double median = lines[lines.Count / 2];
+        return Math.Clamp(TargetLineHeight / median, 0.25, 4.0);
     }
 }

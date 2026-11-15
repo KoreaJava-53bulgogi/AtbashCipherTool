@@ -106,6 +106,51 @@ public class FileFeatureTests : IDisposable
         Assert.Equal("텍스트를 읽었습니다!", vm.FeedbackText);
     }
 
+    /// <summary>글자 둘레의 여백을 거의 다 잘라 낸 그림 (사진·캡처를 글자에 딱 맞게 자른 경우)</summary>
+    private static byte[] TightCrop(byte[] png, int margin = 2)
+    {
+        using var bitmap = SkiaSharp.SKBitmap.Decode(png);
+        int top = bitmap.Height, bottom = -1, left = bitmap.Width, right = -1;
+        for (int y = 0; y < bitmap.Height; y++)
+            for (int x = 0; x < bitmap.Width; x++)
+                if (bitmap.GetPixel(x, y).Red < 128)
+                {
+                    top = Math.Min(top, y); bottom = Math.Max(bottom, y);
+                    left = Math.Min(left, x); right = Math.Max(right, x);
+                }
+        var rect = SkiaSharp.SKRectI.Create(Math.Max(0, left - margin), Math.Max(0, top - margin),
+            Math.Min(bitmap.Width, right + margin + 1) - Math.Max(0, left - margin),
+            Math.Min(bitmap.Height, bottom + margin + 1) - Math.Max(0, top - margin));
+        using var cropped = new SkiaSharp.SKBitmap();
+        Assert.True(bitmap.ExtractSubset(cropped, rect));
+        using var image = SkiaSharp.SKImage.FromBitmap(cropped);
+        return image.Encode(SkiaSharp.SKEncodedImageFormat.Png, 100).ToArray();
+    }
+
+    /// <summary>
+    /// 글자 크기·배경과 상관없이 읽어야 함. Linux VM 에서 "아주 선명한 큰 굵은 글씨"를 못 읽은 일이 있었음:
+    /// 예전 처리(무조건 2배 확대)가 큰 글씨를 너무 크게 만들고, 가장자리에 붙은 글자를 잘못 읽음.
+    /// </summary>
+    [AvaloniaTheory]
+    [InlineData(16, false, false)]   // 작은 글씨
+    [InlineData(36, false, true)]    // 보통 글씨, 여백 없이 자름
+    [InlineData(160, false, true)]   // 아주 큰 글씨, 여백 없이 자름 (VM 에서 실패한 경우)
+    [InlineData(300, false, true)]   // 화면을 가득 채운 글씨
+    [InlineData(12, false, true)]    // 아주 작은 글씨, 여백 없이 자름
+    [InlineData(36, true, false)]    // 어두운 배경에 밝은 글씨 (다크 테마 캡처)
+    [InlineData(120, true, true)]    // 어두운 배경 + 큰 글씨 + 여백 없음
+    public void Ocr_reads_text_of_any_size_and_background(double fontSize, bool dark, bool tight)
+    {
+        OcrGuard.RequireOrSkip();
+        var png = TextImageExporter.RenderPng("안녕하세요 HELLO 2026", dark ? Colors.Black : Colors.White, dark ? Colors.White : Colors.Black, fontSize);
+        if (tight) png = TightCrop(png);
+
+        var text = OcrService.Current.Recognize(png).Replace(" ", "");
+        Assert.Contains("안녕하세요", text);
+        Assert.Contains("HELLO", text);
+        Assert.Contains("2026", text);
+    }
+
     [AvaloniaFact]
     public async Task Clipboard_image_is_recognized()
     {

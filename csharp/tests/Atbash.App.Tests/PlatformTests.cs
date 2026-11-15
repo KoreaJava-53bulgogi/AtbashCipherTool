@@ -219,6 +219,36 @@ public class PlatformTests
         }
     }
 
+    // ---- OCR 전처리: 글줄 높이에 맞춘 배율 ------------------------------------------------------
+
+    /// <summary>가로 width, 글줄마다 (위치, 높이) 만큼 검은 줄이 있는 흑백 그림</summary>
+    private static byte[] Lines(int width, int height, params (int Top, int Height)[] lines)
+    {
+        var gray = Enumerable.Repeat((byte)255, width * height).ToArray();
+        foreach (var (top, h) in lines)
+            for (int y = top; y < top + h; y++)
+                for (int x = 10; x < width - 10; x += 3) gray[y * width + x] = 0;
+        return gray;
+    }
+
+    [Fact]
+    public void Ocr_scale_brings_lines_to_the_target_height()
+    {
+        // 20px 글줄 → 2배, 200px 글줄 → 0.2 가 아니라 하한 0.25, 400px → 0.25
+        Assert.Equal(2.0, OcrImage.ScaleFor(Lines(300, 100, (40, 20)), 300, 100), 3);
+        Assert.Equal(OcrImage.TargetLineHeight / 80.0, OcrImage.ScaleFor(Lines(300, 300, (10, 80), (120, 80), (220, 70)), 300, 300), 3); // 중앙값 80
+        Assert.Equal(0.25, OcrImage.ScaleFor(Lines(300, 500, (10, 400)), 300, 500), 3);
+        Assert.Equal(4.0, OcrImage.ScaleFor(Lines(300, 50, (20, 6)), 300, 50), 3);
+        Assert.Equal(2.0, OcrImage.ScaleFor(Lines(300, 50), 300, 50), 3); // 글줄이 없으면 예전처럼 2배
+    }
+
+    [Fact]
+    public void Ocr_detects_dark_backgrounds()
+    {
+        Assert.True(OcrImage.IsDarkBackground(Enumerable.Repeat((byte)20, 100).ToArray()));
+        Assert.False(OcrImage.IsDarkBackground(Lines(300, 100, (40, 20))));
+    }
+
     // ---- Linux 한글 입력기 연결 ---------------------------------------------------------------
 
     private static string? Choose(Dictionary<string, string> env, params string[] running) =>
