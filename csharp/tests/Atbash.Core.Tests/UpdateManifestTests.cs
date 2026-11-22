@@ -33,6 +33,7 @@ public class UpdateManifestTests
     [InlineData("win-x64", "9.1.0", "9.1.0")]
     [InlineData("osx-arm64", "9.1.0", "a_9.1.0")]
     [InlineData("linux-x64", "9.1.0", "l_9.1.0")]
+    [InlineData("win-x64-lite", "9.1.0", "lite_9.1.0")] // 경량판 ("l_" 와 헷갈리지 않아야 함)
     [InlineData("osx-arm64", "9.1.0-beta.2", "a_9.1.0-beta.2")]
     public void Tags_follow_the_prefix_rule(string platformId, string version, string expectedTag)
     {
@@ -147,6 +148,20 @@ public class UpdateManifestTests
         var json = UpdateManifest.Parse(OldFormatJson).With(PlatformInfo.MacArm64, MacEntry()).ToJson();
         Assert.True(json.IndexOf("\"version\"", StringComparison.Ordinal) < json.IndexOf("\"platforms\"", StringComparison.Ordinal));
         Assert.StartsWith("{\n  \"version\": \"9.0.0\"", json);
+    }
+
+    [Fact]
+    public void Lite_entry_is_separate_and_never_touches_what_the_full_apps_read()
+    {
+        var lite = new PlatformEntry("99.0.0", "lite_99.0.0", null, ReleaseTags.AssetUrl("lite_99.0.0", "Setup_Lite_99.0.0.exe"), MacSha, "경량판");
+        var json = UpdateManifest.Parse(OldFormatJson).With(PlatformInfo.LiteWindowsX64, lite).ToJson();
+
+        Assert.Equal("9.0.0", UpdateInfo.Parse(json).Version);                                       // 예전 앱
+        Assert.Equal("9.0.0", UpdateManifest.Parse(json).Select(PlatformInfo.WindowsX64)!.Version);  // 정식 Windows 앱
+        var read = UpdateManifest.Parse(json).Select(PlatformInfo.LiteWindowsX64)!;                    // 경량판
+        Assert.Equal(("99.0.0", "lite_99.0.0"), (read.Version, read.Tag));
+        Assert.False(PlatformInfo.LiteWindowsX64.SupportsAutoInstall);
+        Assert.Contains("\"win-x64-lite\"", json);
     }
 
     [Fact]

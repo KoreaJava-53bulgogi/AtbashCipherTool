@@ -8,6 +8,7 @@
 | macOS (Apple Silicon) | `a_9.1.0` | `AtbashCipherTool-9.1.0-osx-arm64.dmg` | 아직 없음 (다운로드 페이지 열기) |
 | Linux x64 | `l_9.1.0` | `AtbashCipherTool-9.1.0-x86_64.AppImage` | 아직 없음 (다운로드 페이지 열기) |
 | Windows ARM64 | 정해지지 않음 | | `PlatformInfo.cs` 에 접두사를 정해서 추가 |
+| **경량판** (Rust, Windows x64) | `lite_9.1.0` | `Setup_Lite_9.1.0.exe` | 아직 없음 (알림 → 다운로드 페이지) |
 
 - 베타는 `9.1.0-beta`, `9.1.0-beta.2`, `a_9.1.0-beta` 처럼 뒤에 `-이름`을 붙이고, GitHub 에서 **Pre-release** 로 올립니다.
   정식 `9.1.0` 이 베타보다 새 버전으로 비교되므로, 베타를 쓰는 사람에게도 정식 버전 알림이 갑니다.
@@ -69,6 +70,17 @@
 4. `version.json` 은 건드리지 않습니다. 정식 Mac 출시 때만 `ReleaseTool merge --platform osx-arm64` 로 반영합니다.
 
 받는 사람용 안내(처음 열 때 macOS 가 막는 문제 포함)는 Mac 베타 안내서를 함께 보냅니다.
+
+## 3-2. 경량판 (lite/, Rust)
+
+정식 버전과 다른 앱(설치 이름 "Atbash Cipher Tool Lite")이라 함께 설치할 수 있습니다.
+버전 번호는 정식 버전과 맞추고, `version.json` 에서는 `platforms."win-x64-lite"` 항목만 씁니다.
+
+1. `lite\Cargo.toml` 의 `version` 을 정합니다 (정식 버전과 같게).
+2. `lite\release.bat` 실행 → 테스트(골든 벡터 6,930개 포함) → 빌드 → `lite\installer\Output\Setup_Lite_<버전>.exe`
+   → `version.json` 의 경량판 항목 갱신. 도구가 태그 이름(`lite_<버전>`)을 알려줍니다.
+3. GitHub 에서 그 태그로 Release 를 만들고 설치 파일을 올립니다. **"Set as the latest release" 는 체크하지 않습니다.**
+4. 올린 뒤 `version.json` 을 `main` 에 올리면 경량판 사용자에게 알림이 갑니다 (정식 앱에는 영향 없음).
 
 ## 4. 베타를 소수에게만 나눌 때 (예: Discord DM)
 

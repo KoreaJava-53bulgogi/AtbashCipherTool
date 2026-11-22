@@ -1,5 +1,5 @@
 // Atbash Cipher Tool Lite 의 화면. 창 하나에 꼭 필요한 것만:
-//   맨 위: 불러오기 · 저장 · 언어 · 다크 모드
+//   맨 위: 불러오기 · 저장 · 언어 · 다크 모드 · 업데이트 확인
 //   원본 텍스트 → 변환 방식(+이동 값/지름/키워드/비밀번호) → 변환된 텍스트
 //   맨 아래: (복사됨! 안내) [초기화] [복사] [변환]
 import { Button, ComboBox, LineEdit, Palette, SpinBox, Switch, TextEdit, VerticalBox, HorizontalBox } from "std-widgets.slint";
@@ -17,6 +17,7 @@ export struct Labels {
     load: string,
     save: string,
     dark: string,
+    update: string,
 }
 
 export component AppWindow inherits Window {
@@ -48,6 +49,7 @@ export component AppWindow inherits Window {
     callback number-changed(int);
     callback language-changed(int);
     callback dark-changed(bool);
+    callback check-update();
 
     title: root.labels.title;
     icon: @image-url("../../csharp/packaging/linux/atbash-cipher-tool.png");
@@ -85,6 +87,10 @@ export component AppWindow inherits Window {
                 text: root.labels.dark;
                 checked <=> root.dark;
                 toggled => { root.dark-changed(self.checked); }
+            }
+            Button {
+                text: root.labels.update;
+                clicked => { root.check-update(); }
             }
         }
 

@@ -14,6 +14,10 @@ pub struct Settings {
     pub caesar_shift: i32,
     pub scytale_diameter: i32,
     pub hangul_shift: i32,
+    /// 마지막으로 자동 업데이트 확인을 한 때 (밀리초)
+    pub last_update_check: u64,
+    /// "이 버전 건너뛰기" 한 버전
+    pub skipped_version: Option<String>,
 }
 
 impl Default for Settings {
@@ -26,6 +30,8 @@ impl Default for Settings {
             caesar_shift: 3,
             scytale_diameter: 5,
             hangul_shift: 3,
+            last_update_check: 0,
+            skipped_version: None,
         }
     }
 }

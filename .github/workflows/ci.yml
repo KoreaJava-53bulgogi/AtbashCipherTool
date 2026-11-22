@@ -115,6 +115,42 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+  # 경량판 (Rust): Java 골든 벡터·AES 호환 테스트 + 배포용 빌드
+  lite:
+    name: Lite (Rust, Windows x64)
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: lite
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Cache Rust build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            lite/target
+          key: lite-${{ runner.os }}-${{ hashFiles('lite/Cargo.lock') }}
+
+      - name: Test
+        run: cargo test --release
+
+      - name: Build
+        shell: pwsh
+        run: |
+          cargo build --release
+          $exe = Get-Item target\release\AtbashCipherToolLite.exe
+          Write-Host ("::notice title=Lite::AtbashCipherToolLite.exe {0:N1} MB, version {1}" -f ($exe.Length/1MB), $exe.VersionInfo.ProductVersion)
+
+      - name: Upload exe
+        uses: actions/upload-artifact@v6
+        with:
+          name: lite-win-x64
+          path: lite/target/release/AtbashCipherToolLite.exe
+          retention-days: 14
+
   # macOS .dmg: 만들고, 실제로 켜 보고, 화면을 찍어 둠 (Discord DM 베타용 파일)
   dmg:
     name: DMG (macOS Apple Silicon)

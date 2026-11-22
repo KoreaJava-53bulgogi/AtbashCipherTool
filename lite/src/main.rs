@@ -11,9 +11,15 @@ use atbash_lite::core::engine::{self, Mode, Parameter};
 use atbash_lite::core::{from_units, to_units};
 use atbash_lite::i18n::{Language, Texts};
 use atbash_lite::settings::{self, Settings};
+use atbash_lite::update;
 use slint::{ComponentHandle, ModelRc, SharedString, VecModel};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+thread_local! {
+    /// 다른 스레드(업데이트 확인)의 결과를 화면 스레드에서 처리할 때 상태를 찾는 곳
+    static STATE: RefCell<Option<Rc<RefCell<State>>>> = const { RefCell::new(None) };
+}
 
 struct State {
     settings: Settings,
@@ -56,6 +62,7 @@ fn apply_language(ui: &AppWindow, state: &State) {
         load: menu("LOAD_MENU").into(),
         save: menu("SAVE_MENU").into(),
         dark: t.get("DARK_MODE_MENU").into(),
+        update: t.get("CHECK_UPDATE_MENU").into(),
     });
     let mode_index = ui.get_mode_index();
     ui.set_mode_names(model(Mode::ALL.iter().map(|m| t.get(m.name_key()))));
@@ -115,11 +122,95 @@ fn error_box(title: &str, message: String) {
         .show();
 }
 
+fn info_box(title: &str, message: String) {
+    rfd::MessageDialog::new()
+        .set_level(rfd::MessageLevel::Info)
+        .set_title(title)
+        .set_description(message)
+        .show();
+}
+
+/// 업데이트 확인: 인터넷에서 읽는 동안 화면이 멈추지 않게 따로 실행. `manual` 이면 결과를 항상 알려줌
+fn start_update_check(ui: &AppWindow, manual: bool) {
+    let weak = ui.as_weak();
+    std::thread::spawn(move || {
+        let result = update::fetch_manifest().and_then(|json| update::select(&json));
+        let _ = weak.upgrade_in_event_loop(move |_ui| {
+            if let Some(state) = STATE.with(|s| s.borrow().clone()) {
+                handle_update(&state, result, manual);
+            }
+        });
+    });
+}
+
+fn handle_update(state: &Rc<RefCell<State>>, result: Result<Option<update::Release>, String>, manual: bool) {
+    // 창을 띄우는 동안 상태를 붙잡고 있지 않도록 필요한 글자를 먼저 꺼내 둠
+    let (title, skipped, t) = {
+        let mut st = state.borrow_mut();
+        if result.is_ok() {
+            st.settings.last_update_check = update::now_ms();
+            st.save();
+        }
+        let get = |k: &str| st.texts.get(k);
+        let t = [
+            get("CHECK_UPDATE_MENU"),
+            get("UPDATE_CHECK_FAILED"),
+            get("UPDATE_LATEST_MESSAGE"),
+            get("UPDATE_AVAILABLE_MESSAGE"),
+            get("UPDATE_DOWNLOAD"),
+            get("UPDATE_LATER"),
+            get("UPDATE_SKIP"),
+        ];
+        (st.texts.get("UPDATE_AVAILABLE_TITLE"), st.settings.skipped_version.clone(), t)
+    };
+    let [check_title, failed, latest, available, download, later, skip] = t;
+
+    let release = match result {
+        Err(_) => {
+            if manual {
+                info_box(&check_title, failed);
+            }
+            return;
+        }
+        Ok(r) => r,
+    };
+    let Some(release) = release.filter(|r| update::compare_versions(&r.version, VERSION).is_gt()) else {
+        if manual {
+            info_box(&check_title, latest.replace("{0}", VERSION));
+        }
+        return;
+    };
+    if !manual && skipped.as_deref() == Some(release.version.as_str()) {
+        return; // 자동 확인에서는 "건너뛰기" 한 버전을 다시 알리지 않음
+    }
+
+    let mut message = available.replace("{0}", &release.version).replace("{1}", VERSION);
+    if !release.notes.trim().is_empty() {
+        message = format!("{message}\n\n{}", release.notes.trim());
+    }
+    let picked = rfd::MessageDialog::new()
+        .set_level(rfd::MessageLevel::Info)
+        .set_title(&title)
+        .set_description(message)
+        .set_buttons(rfd::MessageButtons::YesNoCancelCustom(download.clone(), later, skip.clone()))
+        .show();
+    match picked {
+        rfd::MessageDialogResult::Custom(choice) if choice == download => update::open_in_browser(&release.url),
+        rfd::MessageDialogResult::Custom(choice) if choice == skip => {
+            let mut st = state.borrow_mut();
+            st.settings.skipped_version = Some(release.version);
+            st.save();
+        }
+        _ => {}
+    }
+}
+
 fn main() -> Result<(), slint::PlatformError> {
     let path = settings::default_path();
     let loaded = Settings::load(&path);
     let texts = Texts::load(Language::parse(&loaded.language));
     let state = Rc::new(RefCell::new(State { settings: loaded, path, texts }));
+    STATE.with(|s| *s.borrow_mut() = Some(state.clone()));
 
     let ui = AppWindow::new()?;
     {
@@ -284,6 +375,21 @@ fn main() -> Result<(), slint::PlatformError> {
             st.save();
         }
     });
+
+    ui.on_check_update({
+        let weak = ui.as_weak();
+        move || start_update_check(&weak.unwrap(), true)
+    });
+
+    // 하루 한 번 조용히 확인 (창이 뜬 뒤)
+    if update::now_ms().saturating_sub(state.borrow().settings.last_update_check) >= update::AUTO_CHECK_INTERVAL_MS {
+        let weak = ui.as_weak();
+        slint::Timer::single_shot(std::time::Duration::from_secs(2), move || {
+            if let Some(ui) = weak.upgrade() {
+                start_update_check(&ui, false);
+            }
+        });
+    }
 
     ui.run()
 }

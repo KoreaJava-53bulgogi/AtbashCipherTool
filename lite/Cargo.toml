@@ -1,6 +1,7 @@
 [package]
 name = "atbash-lite"
-version = "0.1.0"
+# 버전은 정식 버전과 맞춤 (태그: lite_<버전>)
+version = "9.1.0"
 edition = "2021"
 description = "Atbash Cipher Tool Lite: a small and fast version of Atbash Cipher Tool"
 publish = false
@@ -26,9 +27,13 @@ serde_json = "1"
 slint = "1"
 rfd = "0.15"
 arboard = { version = "3", default-features = false }
+# 업데이트 확인 (version.json 읽기). TLS 는 Windows 내장(SChannel)을 써서 파일을 작게
+ureq = { version = "3", default-features = false, features = ["native-tls"] }
 
 [build-dependencies]
 slint-build = "1"
+# Windows 실행 파일에 아이콘·제품 정보 넣기
+winresource = "0.1"
 
 [profile.release]
 # 작게: 링크할 때 최적화, 쓰지 않는 코드 제거, 디버그 정보 빼기
