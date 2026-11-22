@@ -12,6 +12,14 @@
       "installer": "https://github.com/KoreaJava-53bulgogi/AtbashCipherTool/releases/download/v9.0.0/Setup_9.0.0.exe",
       "sha256": "52329f5387dae3153f7e01e22764fad02741b6c7b5e3a21c19357c4155b5e258",
       "notes": "C#으로 새로 만들었습니다. 더 빠르고 가벼워졌고, Java 설치 없이 실행됩니다. 기존 설정과 사용자 테마는 그대로 옮겨집니다."
+    },
+    "win-x64-lite": {
+      "version": "9.1.0",
+      "tag": "lite_9.1.0",
+      "url": "https://github.com/KoreaJava-53bulgogi/AtbashCipherTool/releases/tag/lite_9.1.0",
+      "installer": "https://github.com/KoreaJava-53bulgogi/AtbashCipherTool/releases/download/lite_9.1.0/Setup_Lite_9.1.0.exe",
+      "sha256": "1682da1af2ee92ed1e2660e4cb9612eff16d9204f6cc9d634cf1ae74da04e2cf",
+      "notes": "가볍고 빠른 경량판의 첫 버전입니다. 설치 파일 6MB, 변환 방식 20가지와 AES 텍스트 암호화, 4개 언어, 다크 모드를 지원합니다."
     }
   }
 }
