@@ -17,7 +17,8 @@ jobs:
     strategy:
       fail-fast: false # 한 곳이 실패해도 나머지 결과는 끝까지 확인
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+        # windows-11-arm: Windows ARM64 (Snapdragon 등). OCR 엔진이 아직 없어서 OCR 테스트는 건너뜀
+        os: [windows-latest, windows-11-arm, macos-latest, ubuntu-latest]
     env:
       DOTNET_NOLOGO: true
       DOTNET_CLI_TELEMETRY_OPTOUT: true
@@ -97,6 +98,7 @@ jobs:
         shell: bash
         run: |
           case "${{ matrix.os }}" in
+            windows-11-arm) rid=win-arm64 ;;
             windows-*) rid=win-x64 ;;
             macos-*)   rid=osx-arm64 ;;
             *)         rid=linux-x64 ;;
@@ -117,13 +119,35 @@ jobs:
 
   # 경량판 (Rust): Java 골든 벡터·AES 호환 테스트 + 배포용 빌드
   lite:
-    name: Lite (Rust, Windows x64)
-    runs-on: windows-latest
+    name: Lite (Rust, ${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: windows-latest, name: Windows x64, artifact: lite-win-x64 }
+          - { os: windows-11-arm, name: Windows ARM64, artifact: lite-win-arm64 }
     defaults:
       run:
         working-directory: lite
     steps:
       - uses: actions/checkout@v5
+
+      # ARM64 실행기에는 Rust 가 미리 깔려 있지 않을 수 있음 → 없으면 설치
+      - name: Install Rust (if missing)
+        shell: pwsh
+        run: |
+          if (-not (Get-Command cargo -ErrorAction SilentlyContinue)) {
+            $arch = if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { 'aarch64' } else { 'x86_64' }
+            Invoke-WebRequest "https://static.rust-lang.org/rustup/dist/$arch-pc-windows-msvc/rustup-init.exe" -OutFile "$env:RUNNER_TEMP\rustup-init.exe"
+            & "$env:RUNNER_TEMP\rustup-init.exe" -y --profile minimal --default-toolchain stable
+            "$env:USERPROFILE\.cargo\bin" | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
+          }
+
+      - name: Show toolchain
+        run: |
+          rustc -vV
+          cargo -V
 
       - name: Cache Rust build
         uses: actions/cache@v4
@@ -132,7 +156,7 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             lite/target
-          key: lite-${{ runner.os }}-${{ hashFiles('lite/Cargo.lock') }}
+          key: lite-${{ matrix.os }}-${{ hashFiles('lite/Cargo.lock') }}
 
       - name: Test
         run: cargo test --release
@@ -142,13 +166,32 @@ jobs:
         run: |
           cargo build --release
           $exe = Get-Item target\release\AtbashCipherToolLite.exe
-          Write-Host ("::notice title=Lite::AtbashCipherToolLite.exe {0:N1} MB, version {1}" -f ($exe.Length/1MB), $exe.VersionInfo.ProductVersion)
+          Write-Host ("::notice title=Lite ${{ matrix.name }}::AtbashCipherToolLite.exe {0:N1} MB, version {1}" -f ($exe.Length/1MB), $exe.VersionInfo.ProductVersion)
+
+      # 실제로 켜서 10초 동안 꺼지지 않는지 + 화면 찍기
+      - name: Smoke test (start the app)
+        shell: pwsh
+        run: |
+          $p = Start-Process target\release\AtbashCipherToolLite.exe -PassThru
+          Start-Sleep 10
+          Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+          $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+          $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
+          [System.Drawing.Graphics]::FromImage($bmp).CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
+          $bmp.Save("$PWD\screenshot.png")
+          if ($p.HasExited) { Write-Host "app exited early (code $($p.ExitCode))"; exit 1 }
+          Stop-Process $p
+          Write-Host "::notice title=Lite ${{ matrix.name }}::started and kept running"
 
       - name: Upload exe
+        if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: lite-win-x64
-          path: lite/target/release/AtbashCipherToolLite.exe
+          name: ${{ matrix.artifact }}
+          path: |
+            lite/target/release/AtbashCipherToolLite.exe
+            lite/screenshot.png
+          if-no-files-found: ignore
           retention-days: 14
 
   # macOS .dmg: 만들고, 실제로 켜 보고, 화면을 찍어 둠 (Discord DM 베타용 파일)
