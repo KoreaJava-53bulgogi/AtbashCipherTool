@@ -1,0 +1,43 @@
+[package]
+name = "atbash-lite"
+version = "0.1.0"
+edition = "2021"
+description = "Atbash Cipher Tool Lite: a small and fast version of Atbash Cipher Tool"
+publish = false
+
+[lib]
+name = "atbash_lite"
+path = "src/lib.rs"
+
+[[bin]]
+name = "AtbashCipherToolLite"
+path = "src/main.rs"
+
+[dependencies]
+# AES 텍스트 (C#/Java 버전과 같은 형식: PBKDF2-HMAC-SHA256 65,536회 + AES-256-GCM)
+aes-gcm = "0.10"
+pbkdf2 = { version = "0.12", default-features = false, features = ["hmac"] }
+sha2 = "0.10"
+getrandom = "0.2"
+# 언어 파일(ko/en/ja/zh.json)과 설정 파일
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# 화면, 파일 선택 창, 클립보드
+slint = "1"
+rfd = "0.15"
+arboard = { version = "3", default-features = false }
+
+[build-dependencies]
+slint-build = "1"
+
+[profile.release]
+# 작게: 링크할 때 최적화, 쓰지 않는 코드 제거, 디버그 정보 빼기
+lto = true
+codegen-units = 1
+opt-level = "s"
+strip = true
+panic = "abort"
+
+# 개발 중 테스트(특히 AES 키 만들기 65,536회)가 너무 느리지 않게 라이브러리는 최적화
+[profile.dev.package."*"]
+opt-level = 3

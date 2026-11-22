@@ -42,3 +42,4 @@ snapshots/
 publish/
 csharp/packaging/linux/out/
 csharp/packaging/macos/out/
+lite/target/
