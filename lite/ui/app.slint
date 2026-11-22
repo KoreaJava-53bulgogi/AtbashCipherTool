@@ -1,6 +1,7 @@
 // Atbash Cipher Tool Lite 의 화면. 창 하나에 꼭 필요한 것만:
-//   원본 텍스트 → 변환 방식(+이동 값/지름/키워드/비밀번호) → [변환] [복사] [초기화] → 변환된 텍스트
-//   맨 아래: 불러오기 · 저장 · 언어 · 다크 모드
+//   맨 위: 불러오기 · 저장 · 언어 · 다크 모드
+//   원본 텍스트 → 변환 방식(+이동 값/지름/키워드/비밀번호) → 변환된 텍스트
+//   맨 아래: (복사됨! 안내) [초기화] [복사] [변환]
 import { Button, ComboBox, LineEdit, Palette, SpinBox, Switch, TextEdit, VerticalBox, HorizontalBox } from "std-widgets.slint";
 
 // 화면에 보이는 글자 (언어가 바뀌면 Rust 가 통째로 바꿔 넣음)
@@ -63,6 +64,30 @@ export component AppWindow inherits Window {
     }
 
     VerticalBox {
+        // 맨 위: 파일과 설정
+        HorizontalBox {
+            padding: 0;
+            Button {
+                text: root.labels.load;
+                clicked => { root.load(); }
+            }
+            Button {
+                text: root.labels.save;
+                clicked => { root.save(); }
+            }
+            Rectangle { horizontal-stretch: 1; }
+            ComboBox {
+                model: root.language-names;
+                current-index <=> root.language-index;
+                selected => { root.language-changed(self.current-index); }
+            }
+            Switch {
+                text: root.labels.dark;
+                checked <=> root.dark;
+                toggled => { root.dark-changed(self.checked); }
+            }
+        }
+
         Text { text: root.labels.input; }
         TextEdit {
             text <=> root.input-text;
@@ -104,30 +129,6 @@ export component AppWindow inherits Window {
             }
         }
 
-        HorizontalBox {
-            padding: 0;
-            Button {
-                text: root.labels.transform;
-                primary: true;
-                enabled: !root.busy;
-                clicked => { root.transform(); }
-            }
-            Button {
-                text: root.labels.copy;
-                clicked => { root.copy(); }
-            }
-            Button {
-                text: root.labels.clear;
-                clicked => { root.clear(); }
-            }
-            Text {
-                text: root.feedback;
-                vertical-alignment: center;
-                horizontal-stretch: 1;
-                color: Palette.accent-background;
-            }
-        }
-
         Text { text: root.labels.output; }
         TextEdit {
             text <=> root.output-text;
@@ -136,26 +137,28 @@ export component AppWindow inherits Window {
             vertical-stretch: 1;
         }
 
+        // 맨 아래: 동작 버튼
         HorizontalBox {
             padding: 0;
-            Button {
-                text: root.labels.load;
-                clicked => { root.load(); }
+            Text {
+                text: root.feedback;
+                vertical-alignment: center;
+                horizontal-stretch: 1;
+                color: Palette.accent-background;
             }
             Button {
-                text: root.labels.save;
-                clicked => { root.save(); }
+                text: root.labels.clear;
+                clicked => { root.clear(); }
             }
-            Rectangle { horizontal-stretch: 1; }
-            ComboBox {
-                model: root.language-names;
-                current-index <=> root.language-index;
-                selected => { root.language-changed(self.current-index); }
+            Button {
+                text: root.labels.copy;
+                clicked => { root.copy(); }
             }
-            Switch {
-                text: root.labels.dark;
-                checked <=> root.dark;
-                toggled => { root.dark-changed(self.checked); }
+            Button {
+                text: root.labels.transform;
+                primary: true;
+                enabled: !root.busy;
+                clicked => { root.transform(); }
             }
         }
     }
